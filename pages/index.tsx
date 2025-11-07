@@ -1,9 +1,16 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Image from "next/image";
+import Link from "next/link";
+import { useSession, signOut } from "@/lib/auth-client";
 import styles from "../styles/Home.module.css";
 
 const Home: NextPage = () => {
+  const { data: session, isPending } = useSession();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className={styles.container}>
       <Head>
@@ -14,6 +21,38 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         <h1 className={styles.title}>Welcome to Next.js on Replit!</h1>
+
+        {isPending ? (
+          <p className={styles.description}>Loading...</p>
+        ) : session?.user ? (
+          <div>
+            <p className={styles.description}>
+              Welcome, {String(session.user.name || session.user.email || "User")}!
+            </p>
+            <button
+              onClick={handleSignOut}
+              style={{
+                padding: "10px 20px",
+                fontSize: "16px",
+                backgroundColor: "#ff0000",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+                marginTop: "20px",
+              }}
+            >
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p className={styles.description}>
+              Please <Link href="/login">sign in</Link> or{" "}
+              <Link href="/signup">sign up</Link> to continue.
+            </p>
+          </div>
+        )}
 
         <p className={styles.description}>
           Get started by editing{" "}
