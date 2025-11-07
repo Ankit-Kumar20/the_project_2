@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { signIn, useSession } from "@/lib/auth-client";
 
 export default function Login() {
@@ -114,7 +115,7 @@ export default function Login() {
         Continue with Google
       </button>
       <p style={{ marginTop: "15px", textAlign: "center" }}>
-        Don't have an account? <a href="/signup">Sign up</a>
+        Don&apos;t have an account? <Link href="/signup">Sign up</Link>
       </p>
     </div>
   );

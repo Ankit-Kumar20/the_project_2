@@ -1,14 +1,49 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useSession, signOut } from "@/lib/auth-client";
+import { useState } from "react";
 import styles from "../styles/Home.module.css";
 
 const Home: NextPage = () => {
   const { data: session, isPending } = useSession();
+  const router = useRouter();
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [days, setDays] = useState("");
+  const [stops, setStops] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleOpenCanvas = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/generate-travel-flow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to, days: Number(days), stops }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        router.push({
+          pathname: "/canvas",
+          query: { flowData: JSON.stringify(result.data.flow) },
+        });
+      } else {
+        alert("Failed to generate travel flow");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,37 +64,98 @@ const Home: NextPage = () => {
             <p className={styles.description}>
               Welcome, {String(session.user.name || session.user.email || "User")}!
             </p>
-            <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
-              <Link
-                href="/canvas"
-                style={{
-                  padding: "10px 20px",
-                  fontSize: "16px",
-                  backgroundColor: "#0070f3",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  display: "inline-block",
-                }}
-              >
-                Open Canvas
-              </Link>
-              <button
-                onClick={handleSignOut}
-                style={{
-                  padding: "10px 20px",
-                  fontSize: "16px",
-                  backgroundColor: "#ff0000",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
-              >
-                Sign Out
-              </button>
+            <div style={{ marginTop: "20px", maxWidth: "500px", margin: "0 auto" }}>
+              <div style={{ marginBottom: "15px" }}>
+                <input
+                  type="text"
+                  placeholder="From (e.g., Delhi)"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    fontSize: "14px",
+                    borderRadius: "5px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: "15px" }}>
+                <input
+                  type="text"
+                  placeholder="To (e.g., Goa)"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    fontSize: "14px",
+                    borderRadius: "5px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: "15px" }}>
+                <input
+                  type="number"
+                  placeholder="Days (e.g., 7)"
+                  value={days}
+                  onChange={(e) => setDays(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    fontSize: "14px",
+                    borderRadius: "5px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: "20px" }}>
+                <input
+                  type="text"
+                  placeholder="Stops (optional, e.g., Mumbai, Pune)"
+                  value={stops}
+                  onChange={(e) => setStops(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    fontSize: "14px",
+                    borderRadius: "5px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                <button
+                  onClick={handleOpenCanvas}
+                  disabled={loading}
+                  style={{
+                    padding: "10px 20px",
+                    fontSize: "16px",
+                    backgroundColor: loading ? "#ccc" : "#0070f3",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {loading ? "Generating..." : "Open Canvas"}
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  style={{
+                    padding: "10px 20px",
+                    fontSize: "16px",
+                    backgroundColor: "#ff0000",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         ) : (

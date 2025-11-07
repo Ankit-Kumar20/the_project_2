@@ -9,7 +9,14 @@ const NodeSchema = z.object({
   type: z.string().optional().default('city'),
   data: z.object({
     label: z.string(),
-    info: z.string().optional()
+    info: z.string().optional(),
+    day: z.number().optional(),
+    activities: z.array(z.string()).optional(),
+    accommodation: z.string().optional(),
+    transportation: z.string().optional(),
+    estimatedCost: z.string().optional(),
+    duration: z.string().optional(),
+    tips: z.array(z.string()).optional()
   }),
   position: z.object({
     x: z.number(),
@@ -46,7 +53,27 @@ export default async function handler(
   try {
     const { from, to, days, stops } = req.body;
 
-    const prompt = `You are an AI travel planner. The user wants to go on a ${days || 7}-day trip from ${from || 'Delhi'} to ${to || 'Goa'}${stops ? ` with stops in ${stops}` : ''}. Generate a travel flow in JSON format following the given schema.`;
+    const prompt = `You are an AI travel planner. The user wants to go on a ${days || 7}-day trip from ${from || 'Delhi'} to ${to || 'Goa'}${stops ? ` with stops in ${stops}` : ''}.
+
+Generate a detailed travel flow with the following requirements:
+1. Create nodes for each day of the journey (minimum ${days || 7} nodes)
+2. Include intermediate stops, attractions, and activities (aim for 15-25 total nodes)
+3. Each node should contain:
+   - label: Name of the location/activity
+   - info: Brief description
+   - day: Which day of the trip (1-${days || 7})
+   - activities: Array of 3-5 specific activities to do at this location
+   - accommodation: Suggested place to stay (hotel/resort/guesthouse)
+   - transportation: How to reach this location from previous node
+   - estimatedCost: Approximate cost in local currency
+   - duration: How long to spend here
+   - tips: Array of 2-3 helpful travel tips
+
+4. Node types should vary: 'city', 'attraction', 'activity', 'restaurant', 'accommodation'
+5. Position nodes vertically with x coordinates varying slightly for visual appeal
+6. Create a comprehensive day-by-day itinerary with morning, afternoon, and evening activities
+
+Generate the complete travel flow in JSON format.`;
 
     const result = await generateObject({
       model: openai('gpt-4o'),

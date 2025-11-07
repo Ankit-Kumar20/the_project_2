@@ -78,6 +78,21 @@ export default function Canvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+  // Load flow data from query params
+  useEffect(() => {
+    if (router.query.flowData) {
+      try {
+        const flowData = JSON.parse(router.query.flowData as string);
+        if (flowData.nodes && flowData.edges) {
+          setNodes(flowData.nodes);
+          setEdges(flowData.edges);
+        }
+      } catch (error) {
+        console.error("Error parsing flow data:", error);
+      }
+    }
+  }, [router.query.flowData, setNodes, setEdges]);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!isPending && !session?.user) {
