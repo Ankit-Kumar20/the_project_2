@@ -29,21 +29,38 @@ const Home: NextPage = () => {
             <p className={styles.description}>
               Welcome, {String(session.user.name || session.user.email || "User")}!
             </p>
-            <button
-              onClick={handleSignOut}
-              style={{
-                padding: "10px 20px",
-                fontSize: "16px",
-                backgroundColor: "#ff0000",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-                marginTop: "20px",
-              }}
-            >
-              Sign Out
-            </button>
+            <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
+              <Link
+                href="/canvas"
+                style={{
+                  padding: "10px 20px",
+                  fontSize: "16px",
+                  backgroundColor: "#0070f3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  textDecoration: "none",
+                  display: "inline-block",
+                }}
+              >
+                Open Canvas
+              </Link>
+              <button
+                onClick={handleSignOut}
+                style={{
+                  padding: "10px 20px",
+                  fontSize: "16px",
+                  backgroundColor: "#ff0000",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         ) : (
           <div>
