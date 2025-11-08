@@ -111,6 +111,14 @@ const CustomNode = ({
     info?: string;
     day?: number;
     coordinates?: { lat: number; lng: number };
+    estimatedCost?: string;
+    costBreakdown?: {
+      transportation?: string;
+      accommodation?: string;
+      food?: string;
+      activities?: string;
+      total?: string;
+    };
     restaurants?: Array<{
       name: string;
       description?: string;
@@ -121,6 +129,7 @@ const CustomNode = ({
 }) => {
   const { theme } = useTheme();
   const [showRestaurants, setShowRestaurants] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   
   const isDark = theme === "dark";
   const hasRestaurants = data.restaurants && data.restaurants.length > 0;
@@ -133,8 +142,83 @@ const CustomNode = ({
         color: isDark ? "#ffffff" : "#000000",
         fontFamily: '"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
     >
       <Handle type="target" position={Position.Top} />
+      
+      {/* Info Tooltip */}
+      {showTooltip && (data.info || data.costBreakdown || data.estimatedCost) && (
+        <div
+          className="absolute bottom-[calc(100%+10px)] left-1/2 transform -translate-x-1/2 min-w-[240px] max-w-[320px] rounded-[16px] p-[14px] shadow-lg z-[1000]"
+          style={{
+            background: isDark ? "#2a2a2a" : "#ffffff",
+            color: isDark ? "#fff" : "#000",
+            border: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`,
+          }}
+        >
+          {data.info && (
+            <div className="text-[11px] mb-[10px] pb-[10px]" style={{ 
+              color: isDark ? "#d0d0d0" : "#444",
+              borderBottom: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`
+            }}>
+              {data.info}
+            </div>
+          )}
+          {data.costBreakdown ? (
+            <div className="space-y-[6px]">
+              <div className="text-[12px] font-bold mb-[8px]" style={{ color: isDark ? "#4ade80" : "#16a34a" }}>
+                Cost Breakdown (Cumulative)
+              </div>
+              {data.costBreakdown.transportation && (
+                <div className="flex justify-between text-[11px]">
+                  <span style={{ color: isDark ? "#a0a0a0" : "#666" }}>Transportation:</span>
+                  <span className="font-semibold" style={{ color: isDark ? "#fff" : "#000" }}>
+                    {data.costBreakdown.transportation}
+                  </span>
+                </div>
+              )}
+              {data.costBreakdown.accommodation && (
+                <div className="flex justify-between text-[11px]">
+                  <span style={{ color: isDark ? "#a0a0a0" : "#666" }}>Accommodation:</span>
+                  <span className="font-semibold" style={{ color: isDark ? "#fff" : "#000" }}>
+                    {data.costBreakdown.accommodation}
+                  </span>
+                </div>
+              )}
+              {data.costBreakdown.food && (
+                <div className="flex justify-between text-[11px]">
+                  <span style={{ color: isDark ? "#a0a0a0" : "#666" }}>Food & Dining:</span>
+                  <span className="font-semibold" style={{ color: isDark ? "#fff" : "#000" }}>
+                    {data.costBreakdown.food}
+                  </span>
+                </div>
+              )}
+              {data.costBreakdown.activities && (
+                <div className="flex justify-between text-[11px]">
+                  <span style={{ color: isDark ? "#a0a0a0" : "#666" }}>Activities & Fees:</span>
+                  <span className="font-semibold" style={{ color: isDark ? "#fff" : "#000" }}>
+                    {data.costBreakdown.activities}
+                  </span>
+                </div>
+              )}
+              {data.costBreakdown.total && (
+                <div className="flex justify-between text-[12px] font-bold pt-[6px] mt-[6px]" style={{ 
+                  borderTop: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`,
+                  color: isDark ? "#4ade80" : "#16a34a"
+                }}>
+                  <span>Total:</span>
+                  <span>{data.costBreakdown.total}</span>
+                </div>
+              )}
+            </div>
+          ) : data.estimatedCost && (
+            <div className="text-[12px] font-semibold flex items-center gap-[6px]" style={{ color: isDark ? "#4ade80" : "#16a34a" }}>
+              Cost: {data.estimatedCost}
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Restaurant Button */}
       {hasRestaurants && (

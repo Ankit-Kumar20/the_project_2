@@ -20,6 +20,13 @@ const NodeSchema = z.object({
     accommodation: z.string().optional(),
     transportation: z.string().optional(),
     estimatedCost: z.string().optional(),
+    costBreakdown: z.object({
+      transportation: z.string().optional(),
+      accommodation: z.string().optional(),
+      food: z.string().optional(),
+      activities: z.string().optional(),
+      total: z.string().optional()
+    }).optional(),
     duration: z.string().optional(),
     tips: z.array(z.string()).optional(),
     googleMapsLink: z.string().optional(),
@@ -63,7 +70,7 @@ async function gatherRestaurantInfo(location: string) {
   
   try {
     const result = await exa.searchAndContents(
-      `Most popular and famous restaurants to eat in ${location} highly rated must-visit dining`,
+      `Most popular and famous restaurants to eat in ${location} highly rated must-visit dining `,
       {
         numResults: 5,
         text: { maxCharacters: 500 }
@@ -79,6 +86,52 @@ async function gatherRestaurantInfo(location: string) {
   } catch (error) {
     console.error('Restaurant search error:', error);
     return '';
+  }
+}
+
+  async function gatherCostInformation(from: string, to: string, stops?: string, budget?: string) {
+  const exa = new Exa(process.env.EXA_API_KEY);
+  
+  try {
+    const queries = [
+      `Travel cost estimate ${from} to ${to} budget prices expenses`,
+      // `How much does it cost to travel from ${from} to ${to}`,
+      // `Transportation costs ${from} to ${to} flight train bus prices`,
+      `Accommodation prices hotels cost in ${to}`,
+      `Food and dining costs in ${to} average meal prices`
+    ];
+
+    if (stops) {
+      const stopsList = stops.split(',').map(s => s.trim());
+      stopsList.forEach(stop => {
+        queries.push(`Travel costs expenses in ${stop} budget prices`);
+        queries.push(`Entry fees admission prices attractions in ${stop}`);
+      });
+    }
+
+    const searchPromises = queries.map(query => 
+      exa.searchAndContents(query, {
+        numResults: 3,
+        text: { maxCharacters: 800 }
+      })
+    );
+
+    const results = await Promise.all(searchPromises);
+    
+    let costInfo = '\n\n=== COST & PRICING INFORMATION FROM WEB SEARCH ===\n';
+    costInfo += `Target Budget: ${budget || 'Not specified'}\n\n`;
+    
+    results.forEach((result, idx) => {
+      costInfo += `\nQuery: ${queries[idx]}\n`;
+      result.results?.forEach((item: any) => {
+        costInfo += `- ${item.title}: ${item.text || ''}\n`;
+      });
+    });
+
+    return costInfo;
+  } catch (error) {
+    console.error('Cost search error:', error);
+    return '\n\n(Unable to fetch real-time cost information)';
   }
 }
 
@@ -174,6 +227,10 @@ export default async function handler(
     const toLocation = destinations;
     const travelInfo = await gatherTravelInformation(fromLocation, toLocation, mustSees);
     
+    // Gather cost information
+    console.log('💰 Gathering cost and pricing information using Exa...');
+    const costInfo = await gatherCostInformation(fromLocation, toLocation, mustSees, budget);
+    
     // Gather restaurant information for key locations
     console.log('🍽️ Gathering restaurant information using Exa...');
     const locations = [toLocation];
@@ -205,6 +262,8 @@ ${travelModes ? `PREFERRED TRAVEL MODES: ${travelModes}` : ''}
 
 ${travelInfo}
 
+${costInfo}
+
 ${restaurantContext}
 
 Using the above information, generate a detailed travel flow with the following requirements:
@@ -221,7 +280,16 @@ Using the above information, generate a detailed travel flow with the following 
    - activities: Array of specific activities matching the user's interests
    - accommodation: Suggested places to stay within budget
    - transportation: Use preferred travel modes when possible
-   - estimatedCost: Costs aligned with the specified budget
+   - estimatedCost: Total CUMULATIVE cost from Day 1 (summary for quick reference)
+   - costBreakdown: **CRITICAL** - Detailed cost breakdown object with CUMULATIVE costs from starting point (${startingPoint}):
+     * transportation: Cumulative transportation costs from ${startingPoint} to this location (flights, trains, buses, taxis)
+     * accommodation: Cumulative accommodation costs up to this point (hotels, stays)
+     * food: Cumulative food and dining costs up to this location
+     * activities: Cumulative entry fees, tickets, and activity costs up to this location
+     * total: Total CUMULATIVE amount (sum of all above)
+     * Format each as a price range (e.g., "$150-200", "₹5000-7000", "€80-120") based on the actual cost data from web search
+     * Keep costs realistic and aligned with the ${budget || 'specified budget'}
+     * Use the pricing information from the cost search results above
    - duration: Appropriate duration based on pace
    - tips: Helpful tips, especially regarding accessibility if mobility constraints mentioned
    - googleMapsLink: Google Maps URL format "https://www.google.com/maps/search/?api=1&query=PLACE_NAME"
