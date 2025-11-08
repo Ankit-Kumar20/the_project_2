@@ -468,25 +468,7 @@ export default function Canvas() {
                     {tripDetails.name || tripDetails.destinations || "Trip"}
                 </div>
             )}
-            
-            {/* Save Status Indicator */}
-            <div className="absolute top-[20px] right-[20px] z-[1000] flex items-center gap-2 px-3 py-2 rounded-full"
-                style={{
-                    background: theme === "dark" ? "#1a1a1a" : "#fff",
-                    color: theme === "dark" ? "#fff" : "#000",
-                }}>
-                {isSaving ? (
-                    <>
-                        <ClockClockwise size={16} weight="bold" className="animate-spin" />
-                        <span className="text-xs">Saving...</span>
-                    </>
-                ) : lastSaved ? (
-                    <>
-                        <CloudCheck size={16} weight="bold" color="#10b981" />
-                        <span className="text-xs">Saved</span>
-                    </>
-                ) : null}
-            </div>
+        
 
             <ReactFlow
                 nodes={nodes}

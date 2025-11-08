@@ -1,5 +1,6 @@
 import { signIn } from "@/lib/auth-client";
 import Link from "next/link";
+import { useState } from "react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,6 +15,9 @@ export default function AuthModal({
   mode,
   onSwitchMode,
 }: AuthModalProps) {
+  const [closeHover, setCloseHover] = useState(false);
+  const [googleHover, setGoogleHover] = useState(false);
+
   if (!isOpen) return null;
 
   const handleGoogle = async () => {
@@ -26,29 +30,33 @@ export default function AuthModal({
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 bottom-0 bg-black/70 flex items-center justify-center p-4 z-[1000]"
+      className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center p-4 z-[1000]"
+      style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[440px] bg-[#1a1a1a] rounded-[24px] p-8 relative"
+        className="w-full max-w-[440px] rounded-[24px] p-8 relative transition-colors duration-300"
+        style={{ backgroundColor: "var(--bg-primary)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-12">
-          <h2 className="text-white text-xl font-normal">
+          <h2
+            className="text-xl font-normal"
+            style={{ color: "var(--text-primary)" }}
+          >
             {mode === "login" ? "Login" : "Sign Up"}
           </h2>
           <button
             onClick={onClose}
-            className="text-white text-2xl w-[44px] h-[44px] rounded-full border-none cursor-pointer font-light flex items-center justify-center transition-all duration-200"
-            style={{ background: "#1a1a1a", color: "#fff" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#fff";
-              e.currentTarget.style.color = "#000";
+            className="text-2xl w-[44px] h-[44px] rounded-full border-none cursor-pointer font-light flex items-center justify-center transition-all duration-200"
+            style={{
+              backgroundColor: closeHover
+                ? "var(--text-primary)"
+                : "var(--bg-primary)",
+              color: closeHover ? "var(--bg-primary)" : "var(--text-primary)",
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#1a1a1a";
-              e.currentTarget.style.color = "#fff";
-            }}
+            onMouseEnter={() => setCloseHover(true)}
+            onMouseLeave={() => setCloseHover(false)}
           >
             ✕
           </button>
@@ -56,20 +64,16 @@ export default function AuthModal({
 
         <button
           onClick={handleGoogle}
-          className="w-full text-white font-medium py-4 px-6 rounded-[24px] flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer"
+          className="w-full font-medium py-4 px-6 rounded-[24px] flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer"
           style={{
-            background: "#1a1a1a",
-            color: "#fff",
-            border: "1px solid #404040",
+            backgroundColor: googleHover
+              ? "var(--text-primary)"
+              : "var(--bg-primary)",
+            color: googleHover ? "var(--bg-primary)" : "var(--text-primary)",
+            border: `1px solid var(--border-color)`,
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#fff";
-            e.currentTarget.style.color = "#000";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#1a1a1a";
-            e.currentTarget.style.color = "#fff";
-          }}
+          onMouseEnter={() => setGoogleHover(true)}
+          onMouseLeave={() => setGoogleHover(false)}
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24">
             <path
@@ -92,24 +96,39 @@ export default function AuthModal({
           Continue with Google
         </button>
 
-        <p className="text-[#a0a0a0] text-xs text-center mt-12">
+        <p
+          className="text-xs text-center mt-12"
+          style={{ color: "var(--text-secondary)" }}
+        >
           By using this service you agree to our{" "}
-          <Link href="/terms" className="text-white hover:underline">
+          <Link
+            href="/terms"
+            className="hover:underline"
+            style={{ color: "var(--text-primary)" }}
+          >
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-white hover:underline">
+          <Link
+            href="/privacy"
+            className="hover:underline"
+            style={{ color: "var(--text-primary)" }}
+          >
             Privacy Policy
           </Link>
         </p>
 
-        <p className="text-[#a0a0a0] text-sm text-center mt-6">
+        <p
+          className="text-sm text-center mt-6"
+          style={{ color: "var(--text-secondary)" }}
+        >
           {mode === "login" ? (
             <>
               Don&apos;t have an account?{" "}
               <button
                 onClick={() => onSwitchMode("signup")}
-                className="text-white hover:underline bg-transparent border-none cursor-pointer"
+                className="hover:underline bg-transparent border-none cursor-pointer"
+                style={{ color: "var(--text-primary)" }}
               >
                 Sign up
               </button>
@@ -119,7 +138,8 @@ export default function AuthModal({
               Already have an account?{" "}
               <button
                 onClick={() => onSwitchMode("login")}
-                className="text-white hover:underline bg-transparent border-none cursor-pointer"
+                className="hover:underline bg-transparent border-none cursor-pointer"
+                style={{ color: "var(--text-primary)" }}
               >
                 Sign in
               </button>
