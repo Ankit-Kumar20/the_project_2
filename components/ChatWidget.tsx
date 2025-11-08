@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Trash, PaperPlaneTilt, ChatCircle } from "@phosphor-icons/react";
+import { Trash, PaperPlaneTilt, ChatCircle, Sparkle } from "@phosphor-icons/react";
 import { useTheme } from "@/lib/theme-context";
 
 export default function ChatWidget() {
@@ -41,14 +41,32 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className={`fixed bottom-5 right-5 z-[102] w-12 h-12 rounded-full border-none flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-110 ${
-            isDark 
-              ? "bg-white text-black shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.6)]" 
-              : "bg-black text-white shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.2)]"
-          }`}
+          className="fixed bottom-5 right-5 z-[102] w-[44px] h-[44px] border-none rounded-full cursor-pointer font-light text-[18px] flex items-center justify-center transition-all duration-200"
+          style={{
+            background: isDark ? "#1a1a1a" : "#fff",
+            color: isDark ? "#fff" : "#000",
+          }}
+          onMouseEnter={(e) => {
+            if (isDark) {
+              e.currentTarget.style.background = "#fff";
+              e.currentTarget.style.color = "#000";
+            } else {
+              e.currentTarget.style.background = "#000";
+              e.currentTarget.style.color = "#fff";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (isDark) {
+              e.currentTarget.style.background = "#1a1a1a";
+              e.currentTarget.style.color = "#fff";
+            } else {
+              e.currentTarget.style.background = "#fff";
+              e.currentTarget.style.color = "#000";
+            }
+          }}
           title="Open chat"
         >
-          <ChatCircle size={28} weight="fill" />
+          <Sparkle size={20} weight="bold" />
         </button>
       )}
 
