@@ -3,8 +3,18 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession, signOut } from "@/lib/auth-client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "../styles/Home.module.css";
+
+interface Trip {
+  id: string;
+  name: string;
+  fromLocation: string;
+  toLocation: string;
+  days: string;
+  stops: string | null;
+  createdAt: string;
+}
 
 const Home: NextPage = () => {
   const { data: session, isPending } = useSession();
@@ -13,30 +23,57 @@ const Home: NextPage = () => {
   const [to, setTo] = useState("");
   const [days, setDays] = useState("");
   const [stops, setStops] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loadingTrips, setLoadingTrips] = useState(false);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchTrips();
+    }
+  }, [session]);
+
+  const fetchTrips = async () => {
+    setLoadingTrips(true);
+    try {
+      const response = await fetch("/api/trips/list");
+      const result = await response.json();
+      if (result.success) {
+        setTrips(result.trips);
+      }
+    } catch (error) {
+      console.error("Error fetching trips:", error);
+    } finally {
+      setLoadingTrips(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
   };
 
-  const handleOpenCanvas = async () => {
+  const handleCreateTrip = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/generate-travel-flow", {
+      const response = await fetch("/api/trips/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to, days: Number(days), stops }),
+        body: JSON.stringify({ from, to, days: Number(days), stops, name }),
       });
 
       const result = await response.json();
       
       if (result.success) {
         setShowModal(false);
-        router.push({
-          pathname: "/canvas",
-          query: { flowData: JSON.stringify(result.data.flow) },
-        });
+        setFrom("");
+        setTo("");
+        setDays("");
+        setStops("");
+        setName("");
+        fetchTrips();
+        router.push(`/canvas?tripId=${result.tripId}`);
       } else {
         alert("Failed to generate travel flow");
       }
@@ -45,6 +82,37 @@ const Home: NextPage = () => {
       alert("An error occurred");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewTrip = (tripId: string) => {
+    router.push(`/canvas?tripId=${tripId}`);
+  };
+
+  const handleDeleteTrip = async (tripId: string, tripName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!confirm(`Are you sure you want to delete "${tripName}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/trips/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: tripId }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        fetchTrips();
+      } else {
+        alert("Failed to delete trip");
+      }
+    } catch (error) {
+      console.error("Error deleting trip:", error);
+      alert("An error occurred while deleting");
     }
   };
 
@@ -98,6 +166,84 @@ const Home: NextPage = () => {
               </button>
             </div>
 
+            {/* Trips List */}
+            <div style={{ marginTop: "40px", maxWidth: "800px", margin: "40px auto" }}>
+              <h2 style={{ marginBottom: "20px", color: "#333" }}>Your Trips</h2>
+              {loadingTrips ? (
+                <p>Loading trips...</p>
+              ) : trips.length === 0 ? (
+                <p style={{ color: "#666" }}>No trips yet. Create your first trip!</p>
+              ) : (
+                <div style={{ display: "grid", gap: "15px" }}>
+                  {trips.map((trip) => (
+                    <div
+                      key={trip.id}
+                      onClick={() => handleViewTrip(trip.id)}
+                      style={{
+                        padding: "20px",
+                        backgroundColor: "#fff",
+                        border: "1px solid #ddd",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                        position: "relative",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                        e.currentTarget.style.borderColor = "#0070f3";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+                        e.currentTarget.style.borderColor = "#ddd";
+                      }}
+                    >
+                      <button
+                        onClick={(e) => handleDeleteTrip(trip.id, trip.name, e)}
+                        style={{
+                          position: "absolute",
+                          top: "15px",
+                          right: "15px",
+                          padding: "6px 12px",
+                          fontSize: "12px",
+                          backgroundColor: "#ff4444",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                          transition: "background-color 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#cc0000";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "#ff4444";
+                        }}
+                      >
+                        Delete
+                      </button>
+                      <h3 style={{ margin: "0 0 10px 0", color: "#333", paddingRight: "80px" }}>{trip.name}</h3>
+                      <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
+                        <strong>Route:</strong> {trip.fromLocation} → {trip.toLocation}
+                      </p>
+                      <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
+                        <strong>Duration:</strong> {trip.days} days
+                      </p>
+                      {trip.stops && (
+                        <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
+                          <strong>Stops:</strong> {trip.stops}
+                        </p>
+                      )}
+                      <p style={{ margin: "10px 0 0 0", color: "#999", fontSize: "12px" }}>
+                        Created: {new Date(trip.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {showModal && (
               <div
                 style={{
@@ -126,8 +272,23 @@ const Home: NextPage = () => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <h2 style={{ marginTop: 0, marginBottom: "20px", color: "#333" }}>
-                    Plan Your Trip
+                  Plan Your Trip
                   </h2>
+                  <div style={{ marginBottom: "15px" }}>
+                  <input
+                  type="text"
+                  placeholder="Trip Name (optional)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  style={{
+                  width: "100%",
+                  padding: "10px",
+                  fontSize: "14px",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                  }}
+                  />
+                  </div>
                   <div style={{ marginBottom: "15px" }}>
                     <input
                       type="text"
@@ -204,16 +365,16 @@ const Home: NextPage = () => {
                       Cancel
                     </button>
                     <button
-                      onClick={handleOpenCanvas}
-                      disabled={loading}
+                      onClick={handleCreateTrip}
+                      disabled={loading || !from || !to}
                       style={{
                         padding: "10px 20px",
                         fontSize: "16px",
-                        backgroundColor: loading ? "#ccc" : "#0070f3",
+                        backgroundColor: loading || !from || !to ? "#ccc" : "#0070f3",
                         color: "white",
                         border: "none",
                         borderRadius: "5px",
-                        cursor: loading ? "not-allowed" : "pointer",
+                        cursor: loading || !from || !to ? "not-allowed" : "pointer",
                       }}
                     >
                       {loading ? "Generating..." : "Generate Trip"}

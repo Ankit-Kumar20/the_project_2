@@ -8,6 +8,13 @@
       "when": 1762552918133,
       "tag": "0000_purple_obadiah_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762569535732,
+      "tag": "0001_rainy_gargoyle",
+      "breakpoints": true
     }
   ]
 }

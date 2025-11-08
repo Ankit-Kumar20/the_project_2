@@ -60,6 +60,26 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Trips table
+export const trips = pgTable("trips", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  fromLocation: varchar("from_location", { length: 255 }).notNull(),
+  toLocation: varchar("to_location", { length: 255 }).notNull(),
+  days: varchar("days", { length: 50 }),
+  stops: text("stops"),
+  tripData: text("trip_data").notNull(), // JSON stringified
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
+export type Trip = typeof trips.$inferSelect;
+export type NewTrip = typeof trips.$inferInsert;
 

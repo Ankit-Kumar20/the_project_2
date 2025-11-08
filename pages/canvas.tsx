@@ -163,25 +163,50 @@ export default function Canvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Load flow data from query params
+  // Load flow data from trip ID or query params
   useEffect(() => {
-    if (router.query.flowData) {
-      try {
-        const flowData = JSON.parse(router.query.flowData as string);
-        if (flowData.nodes && flowData.edges) {
-          // Ensure all nodes use 'custom' type to display Google Maps links
-          const processedNodes = flowData.nodes.map((node: Node) => ({
-            ...node,
-            type: node.type || 'custom'
-          }));
-          setNodes(processedNodes);
-          setEdges(flowData.edges);
+    const loadTripData = async () => {
+      // Load from tripId if provided
+      if (router.query.tripId) {
+        try {
+          const response = await fetch(`/api/trips/${router.query.tripId}`);
+          const result = await response.json();
+          
+          if (result.success && result.trip?.tripData) {
+            const flowData = result.trip.tripData;
+            if (flowData.nodes && flowData.edges) {
+              const processedNodes = flowData.nodes.map((node: Node) => ({
+                ...node,
+                type: node.type || 'custom'
+              }));
+              setNodes(processedNodes);
+              setEdges(flowData.edges);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading trip data:", error);
         }
-      } catch (error) {
-        console.error("Error parsing flow data:", error);
       }
-    }
-  }, [router.query.flowData, setNodes, setEdges]);
+      // Fallback to flowData query param (legacy support)
+      else if (router.query.flowData) {
+        try {
+          const flowData = JSON.parse(router.query.flowData as string);
+          if (flowData.nodes && flowData.edges) {
+            const processedNodes = flowData.nodes.map((node: Node) => ({
+              ...node,
+              type: node.type || 'custom'
+            }));
+            setNodes(processedNodes);
+            setEdges(flowData.edges);
+          }
+        } catch (error) {
+          console.error("Error parsing flow data:", error);
+        }
+      }
+    };
+
+    loadTripData();
+  }, [router.query.tripId, router.query.flowData, setNodes, setEdges]);
 
   // Redirect if not authenticated
   useEffect(() => {
