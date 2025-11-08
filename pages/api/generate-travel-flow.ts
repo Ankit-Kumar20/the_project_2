@@ -97,7 +97,9 @@ async function gatherCostInformation(from: string, to: string, stops?: string) {
       `How much does it cost to travel from ${from} to ${to}`,
       `Transportation costs ${from} to ${to} flight train bus prices`,
       `Accommodation prices hotels cost in ${to}`,
-      `Food and dining costs in ${to} average meal prices`
+      `Food and dining costs in ${to} average meal prices`,
+      `places inside India should be in ruppees`
+
     ];
 
     if (stops) {

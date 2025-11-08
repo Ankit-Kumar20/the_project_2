@@ -36,6 +36,8 @@ import {
   Sun,
   FilePdf,
   Lightbulb,
+  CurrencyDollar,
+  ForkKnife,
 } from "@phosphor-icons/react";
 import { jsPDF } from "jspdf";
 
@@ -129,10 +131,12 @@ const CustomNode = ({
 }) => {
   const { theme } = useTheme();
   const [showRestaurants, setShowRestaurants] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [showCostBreakdown, setShowCostBreakdown] = useState(false);
+  const restaurantTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const isDark = theme === "dark";
   const hasRestaurants = data.restaurants && data.restaurants.length > 0;
+  const hasCostInfo = data.costBreakdown || data.estimatedCost;
 
   return (
     <div
@@ -142,13 +146,109 @@ const CustomNode = ({
         color: isDark ? "#ffffff" : "#000000",
         fontFamily: '"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
     >
       <Handle type="target" position={Position.Top} />
       
-      {/* Info Tooltip */}
-      {showTooltip && (data.info || data.costBreakdown || data.estimatedCost) && (
+      {/* Main Content with Hierarchy */}
+      {data.day && (
+        <div
+          className="text-[10px] font-medium mb-[4px]"
+          style={{ color: isDark ? "#888" : "#999" }}
+        >
+          Day {data.day}
+        </div>
+      )}
+      
+      <div
+        className="font-semibold text-[15px] mb-[14px]"
+        style={{ color: isDark ? "#fff" : "#000" }}
+      >
+        {data.label}
+      </div>
+
+      {/* Action Icons Row */}
+      <div className="flex items-center justify-center gap-[6px]">
+        {data.googleMapsLink && (
+          <a
+            href={data.googleMapsLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-[4px] text-[11px] no-underline border-none py-[4px] px-[10px] rounded-[24px] transition-all duration-200 font-medium"
+            style={{
+              color: isDark ? "#fff" : "#000",
+              background: isDark ? "#1a1a1a" : "#fff",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = isDark ? "#fff" : "#000";
+              e.currentTarget.style.color = isDark ? "#000" : "#fff";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = isDark ? "#1a1a1a" : "#fff";
+              e.currentTarget.style.color = isDark ? "#fff" : "#000";
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <MapPin size={14} weight="fill" />
+            Maps
+          </a>
+        )}
+        
+        {hasCostInfo && (
+          <button
+            className="inline-flex items-center gap-[4px] text-[11px] border-none py-[4px] px-[10px] rounded-[24px] transition-all duration-200 font-medium cursor-pointer"
+            style={{
+              color: isDark ? "#fff" : "#000",
+              background: isDark ? "#1a1a1a" : "#fff",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = isDark ? "#fff" : "#000";
+              e.currentTarget.style.color = isDark ? "#000" : "#fff";
+              setShowCostBreakdown(true);
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = isDark ? "#1a1a1a" : "#fff";
+              e.currentTarget.style.color = isDark ? "#fff" : "#000";
+              setShowCostBreakdown(false);
+            }}
+          >
+            <CurrencyDollar size={14} weight="fill" />
+            Cost
+          </button>
+        )}
+
+        {hasRestaurants && (
+          <button
+            className="inline-flex items-center gap-[4px] text-[11px] border-none py-[4px] px-[10px] rounded-[24px] transition-all duration-200 font-medium cursor-pointer"
+            style={{
+              color: isDark ? "#fff" : "#000",
+              background: isDark ? "#1a1a1a" : "#fff",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = isDark ? "#fff" : "#000";
+              e.currentTarget.style.color = isDark ? "#000" : "#fff";
+              if (restaurantTimeoutRef.current) {
+                clearTimeout(restaurantTimeoutRef.current);
+              }
+              setShowRestaurants(true);
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = isDark ? "#1a1a1a" : "#fff";
+              e.currentTarget.style.color = isDark ? "#fff" : "#000";
+              restaurantTimeoutRef.current = setTimeout(() => {
+                setShowRestaurants(false);
+              }, 200);
+            }}
+          >
+            <ForkKnife size={14} weight="fill" />
+            Food
+          </button>
+        )}
+      </div>
+
+      {/* Cost Breakdown Popup */}
+      {showCostBreakdown && hasCostInfo && (
         <div
           className="absolute bottom-[calc(100%+10px)] left-1/2 transform -translate-x-1/2 min-w-[240px] max-w-[320px] rounded-[16px] p-[14px] shadow-lg z-[1000]"
           style={{
@@ -156,15 +256,9 @@ const CustomNode = ({
             color: isDark ? "#fff" : "#000",
             border: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`,
           }}
+          onMouseEnter={() => setShowCostBreakdown(true)}
+          onMouseLeave={() => setShowCostBreakdown(false)}
         >
-          {data.info && (
-            <div className="text-[11px] mb-[10px] pb-[10px]" style={{ 
-              color: isDark ? "#d0d0d0" : "#444",
-              borderBottom: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`
-            }}>
-              {data.info}
-            </div>
-          )}
           {data.costBreakdown ? (
             <div className="space-y-[6px]">
               <div className="text-[12px] font-bold mb-[8px]" style={{ color: isDark ? "#4ade80" : "#16a34a" }}>
@@ -219,46 +313,39 @@ const CustomNode = ({
           )}
         </div>
       )}
-      
-      {/* Restaurant Button */}
-      {hasRestaurants && (
-        <div
-          className="absolute top-[-8px] right-[-8px] w-[28px] h-[28px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-200"
-          style={{
-            background: isDark ? "#ff6b6b" : "#ff6b6b",
-            color: "#fff",
-            zIndex: 10,
-          }}
-          onMouseEnter={() => setShowRestaurants(true)}
-          onMouseLeave={() => setShowRestaurants(false)}
-        >
-          🍽️
-        </div>
-      )}
 
       {/* Restaurant Popup */}
       {showRestaurants && hasRestaurants && (
         <div
-          className="absolute top-[30px] right-[-10px] min-w-[280px] max-w-[320px] rounded-[16px] p-[16px] shadow-lg z-[1000]"
+          className="absolute bottom-[calc(100%+10px)] left-1/2 transform -translate-x-1/2 min-w-[280px] max-w-[320px] rounded-[16px] p-[16px] shadow-lg z-[1000]"
           style={{
             background: isDark ? "#2a2a2a" : "#ffffff",
             color: isDark ? "#fff" : "#000",
             border: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`,
           }}
-          onMouseEnter={() => setShowRestaurants(true)}
-          onMouseLeave={() => setShowRestaurants(false)}
+          onMouseEnter={() => {
+            if (restaurantTimeoutRef.current) {
+              clearTimeout(restaurantTimeoutRef.current);
+            }
+            setShowRestaurants(true);
+          }}
+          onMouseLeave={() => {
+            restaurantTimeoutRef.current = setTimeout(() => {
+              setShowRestaurants(false);
+            }, 200);
+          }}
         >
           <div
-            className="text-[13px] font-semibold mb-[12px] pb-[8px]"
-            style={{ borderBottom: `1px solid ${isDark ? "#404040" : "#e0e0e0"}` }}
+            className="text-[12px] font-semibold mb-[10px]"
+            style={{ color: isDark ? "#fff" : "#000" }}
           >
-            🍽️ Recommended Restaurants
+            Recommended Restaurants
           </div>
-          <div className="space-y-[12px] max-h-[300px] overflow-y-auto">
+          <div className="space-y-[8px] max-h-[280px] overflow-y-auto">
             {data.restaurants!.map((restaurant, idx) => (
               <div
                 key={idx}
-                className="text-left pb-[10px]"
+                className="text-left pb-[8px]"
                 style={{
                   borderBottom:
                     idx < data.restaurants!.length - 1
@@ -267,7 +354,7 @@ const CustomNode = ({
                 }}
               >
                 <div
-                  className="font-semibold text-[12px] mb-[4px] hover:underline cursor-pointer inline-block"
+                  className="font-medium text-[11px] mb-[3px] hover:underline cursor-pointer inline-block"
                   style={{ color: isDark ? "#fff" : "#000" }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -279,79 +366,32 @@ const CustomNode = ({
                     );
                   }}
                 >
-                  📍 {restaurant.name}
+                  {restaurant.name}
                 </div>
-                {restaurant.cuisine && (
-                  <div
-                    className="text-[11px] mb-[2px]"
-                    style={{ color: isDark ? "#a0a0a0" : "#666" }}
-                  >
-                    🍴 {restaurant.cuisine}
-                  </div>
-                )}
-                {restaurant.priceRange && (
-                  <div
-                    className="text-[11px] mb-[2px]"
-                    style={{ color: isDark ? "#a0a0a0" : "#666" }}
-                  >
-                    💰 {restaurant.priceRange}
-                  </div>
-                )}
-                {restaurant.description && (
-                  <div
-                    className="text-[10px] mt-[4px]"
-                    style={{ color: isDark ? "#888" : "#777" }}
-                  >
-                    {restaurant.description}
-                  </div>
-                )}
+                <div className="flex items-center gap-[8px]">
+                  {restaurant.cuisine && (
+                    <span
+                      className="text-[10px]"
+                      style={{ color: isDark ? "#a0a0a0" : "#666" }}
+                    >
+                      {restaurant.cuisine}
+                    </span>
+                  )}
+                  {restaurant.priceRange && (
+                    <span
+                      className="text-[10px]"
+                      style={{ color: isDark ? "#a0a0a0" : "#666" }}
+                    >
+                      {restaurant.priceRange}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
-      
-      <div
-        className="font-semibold mb-[6px] text-[14px]"
-        style={{ color: isDark ? "#fff" : "#000" }}
-      >
-        {data.label}
-      </div>
-      {data.day && (
-        <div
-          className="text-[11px] mb-[8px] font-normal"
-          style={{ color: isDark ? "#a0a0a0" : "#666" }}
-        >
-          Day {data.day}
-        </div>
-      )}
-      {data.googleMapsLink && (
-        <a
-          href={data.googleMapsLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-[4px] text-[11px] no-underline border-none py-[4px] px-[10px] rounded-[24px] mt-[2px] transition-all duration-200 font-medium"
-          style={{
-            color: isDark ? "#fff" : "#000",
-            background: isDark ? "#1a1a1a" : "#fff",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = isDark ? "#fff" : "#000";
-            e.currentTarget.style.color = isDark ? "#000" : "#fff";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = isDark ? "#1a1a1a" : "#fff";
-            e.currentTarget.style.color = isDark ? "#fff" : "#000";
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log("Google Maps link clicked:", data.googleMapsLink);
-          }}
-        >
-          <MapPin size={14} weight="fill" />
-          View on Maps
-        </a>
-      )}
+
       <Handle type="source" position={Position.Bottom} />
     </div>
   );
