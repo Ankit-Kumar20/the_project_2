@@ -35,7 +35,10 @@ const EdgeSchema = z.object({
   source: z.string(),
   target: z.string(),
   label: z.string().optional(),
-  type: z.string().optional().default('smoothstep')
+  type: z.string().optional().default('smoothstep'),
+  data: z.object({
+    distance: z.string()
+  }).optional()
 });
 
 const FlowSchema = z.object({
@@ -108,27 +111,44 @@ export default async function handler(
 
 ${travelInfo}
 
-Using the above real-time information from web search, generate a detailed travel flow with the following requirements:
-1. Create nodes for each day of the journey (minimum ${days || 7} nodes)
-2. Include intermediate stops, attractions, and activities (aim for 15-25 total nodes)
-3. Each node should contain:
-   - label: Name of the location/activity
-   - info: Brief description
-   - day: Which day of the trip (1-${days || 7})
-   - activities: Array of 3-5 specific activities to do at this location
-   - accommodation: Suggested place to stay (hotel/resort/guesthouse)
-   - transportation: How to reach this location from previous node
-   - estimatedCost: Approximate cost in local currency
-   - duration: How long to spend here
-   - tips: Array of 2-3 helpful travel tips
-   - googleMapsLink: Generate a Google Maps URL in the format "https://www.google.com/maps/search/?api=1&query=PLACE_NAME" (replace PLACE_NAME with URL-encoded location name)
-   - coordinates: Approximate latitude and longitude of the location (e.g., {lat: 15.2993, lng: 74.1240} for Goa)
+Using the above real-time information from web search, generate a detailed travel flow showing the GEOGRAPHICAL JOURNEY with the following requirements:
 
-4. Node types should vary: 'city', 'attraction', 'activity', 'restaurant', 'accommodation'
-5. Position nodes vertically with x coordinates varying slightly for visual appeal
-6. Create a comprehensive day-by-day itinerary with morning, afternoon, and evening activities
-7. IMPORTANT: Use the real-time information provided above to suggest actual attractions, activities, and places mentioned in the search results
-8. IMPORTANT: For each location, generate accurate Google Maps links and approximate coordinates
+1. NODES REPRESENT REAL LOCATIONS ONLY (cities, tourist spots, landmarks, beaches, monuments, restaurants, hotels, etc.)
+   - Each node is a PHYSICAL PLACE the traveler will visit
+   - DO NOT create nodes for abstract activities (like "Morning activities" or "Sightseeing")
+   - Activities should be listed inside the node's activities array, not as separate nodes
+   
+2. Create 12-20 location nodes spread across ${days || 7} days
+   - Start with ${from || 'Delhi'}
+   - End with ${to || 'Goa'}
+   - Include stops at: ${stops || 'interesting places along the route'}
+   - Include specific tourist attractions, beaches, forts, temples, markets, restaurants, viewpoints, etc.
+
+3. Each node MUST contain:
+   - label: EXACT name of the physical location (e.g., "Gateway of India", "Baga Beach", "Taj Mahal", "Mysore Palace")
+   - info: Brief description of the location and why it's worth visiting
+   - day: Which day of the trip (1-${days || 7})
+   - activities: Array of 3-5 specific things to DO at this location
+   - accommodation: Hotel/resort name (for overnight stay locations)
+   - transportation: How to travel from previous location (e.g., "20 min taxi", "2 hr train", "flight")
+   - estimatedCost: Approximate cost for visiting (entry fees + food + transport)
+   - duration: Recommended time to spend at this location
+   - tips: Array of 2-3 practical tips for visiting this place
+   - googleMapsLink: "https://www.google.com/maps/search/?api=1&query=EXACT_LOCATION_NAME" (URL-encoded)
+   - coordinates: Accurate lat/lng for the exact location
+
+4. Node types based on location category:
+   - 'city': Major cities/towns
+   - 'attraction': Tourist spots, monuments, museums, viewpoints
+   - 'restaurant': Specific famous restaurants or food streets
+   - 'accommodation': Hotels/resorts where staying overnight
+
+5. Connect locations in travel order with edges showing distance and time
+   - Each edge MUST have data.distance showing: "Distance, Time" (e.g., "45 km, 1 hr", "2 km, 10 min walk")
+   
+6. Use REAL locations from the web search results above - mention actual place names, not generic activities
+
+7. Position nodes vertically by day, with x varying for visual layout
 
 Generate the complete travel flow in JSON format.`;
 

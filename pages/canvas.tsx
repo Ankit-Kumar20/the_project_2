@@ -10,10 +10,13 @@ import ReactFlow, {
     useEdgesState,
     Background,
     NodeTypes,
+    EdgeTypes,
     useReactFlow,
     ReactFlowInstance,
     Handle,
     Position,
+    EdgeProps,
+    getBezierPath,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import ChatWidget from "@/components/ChatWidget";
@@ -21,6 +24,67 @@ import TripDetailsCard from "@/components/TripDetailsCard";
 import { useTheme } from "@/lib/theme-context";
 import { MapPin, Plus, Minus, CornersOut, CloudCheck, CloudSlash, ClockClockwise, Moon, Sun, FilePdf } from "@phosphor-icons/react";
 import { jsPDF } from "jspdf";
+
+// Custom Edge component with distance display
+const CustomEdge = ({
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    data,
+}: EdgeProps) => {
+    const [edgePath, labelX, labelY] = getBezierPath({
+        sourceX,
+        sourceY,
+        sourcePosition,
+        targetX,
+        targetY,
+        targetPosition,
+    });
+
+    const isDark = document.documentElement.classList.contains("dark");
+
+    return (
+        <>
+            <path
+                id={id}
+                className="react-flow__edge-path"
+                d={edgePath}
+                strokeWidth={1.5}
+                stroke={isDark ? "#fff" : "#000"}
+            />
+            {data?.distance && (
+                <foreignObject
+                    width={120}
+                    height={40}
+                    x={labelX - 60}
+                    y={labelY - 20}
+                    className="edgebutton-foreignobject"
+                    requiredExtensions="http://www.w3.org/1999/xhtml"
+                >
+                    <div
+                        style={{
+                            background: isDark ? "#1a1a1a" : "#fff",
+                            color: isDark ? "#fff" : "#000",
+                            padding: "4px 8px",
+                            borderRadius: "12px",
+                            fontSize: "11px",
+                            fontWeight: "500",
+                            textAlign: "center",
+                            border: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`,
+                            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                    >
+                        {data.distance}
+                    </div>
+                </foreignObject>
+            )}
+        </>
+    );
+};
 
 // Custom node component - Simple black and white wireframe style
 const CustomNode = ({
@@ -32,6 +96,7 @@ const CustomNode = ({
         info?: string;
         day?: number;
         theme?: string;
+        coordinates?: { lat: number; lng: number };
     };
 }) => {
     // Debug: Log node data to console
@@ -105,6 +170,12 @@ const nodeTypes: NodeTypes = {
     default: CustomNode,
     input: CustomNode,
     output: CustomNode,
+};
+
+// Define edge types
+const edgeTypes: EdgeTypes = {
+    default: CustomEdge,
+    smoothstep: CustomEdge,
 };
 
 const initialNodes: Node[] = [];
@@ -425,6 +496,58 @@ export default function Canvas() {
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isLoadingTrip, setIsLoadingTrip] = useState(true);
+    const [loadingDistances, setLoadingDistances] = useState(false);
+
+    // Calculate distance between two nodes
+    const calculateDistance = useCallback(async (sourceNode: Node, targetNode: Node) => {
+        const sourceCoords = sourceNode.data.coordinates;
+        const targetCoords = targetNode.data.coordinates;
+        
+        if (!sourceCoords || !targetCoords) {
+            return null;
+        }
+
+        try {
+            const response = await fetch('/api/distance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    origins: `${sourceCoords.lat},${sourceCoords.lng}`,
+                    destinations: `${targetCoords.lat},${targetCoords.lng}`,
+                }),
+            });
+
+            const data = await response.json();
+            return data.distance || null;
+        } catch (error) {
+            console.error('Error calculating distance:', error);
+            return null;
+        }
+    }, []);
+
+    // Update edges with distances
+    const updateEdgesWithDistances = useCallback(async (nodesToProcess: Node[], edgesToProcess: Edge[]) => {
+        setLoadingDistances(true);
+        const updatedEdges = await Promise.all(
+            edgesToProcess.map(async (edge) => {
+                const sourceNode = nodesToProcess.find(n => n.id === edge.source);
+                const targetNode = nodesToProcess.find(n => n.id === edge.target);
+                
+                if (sourceNode && targetNode) {
+                    const distance = await calculateDistance(sourceNode, targetNode);
+                    if (distance) {
+                        return {
+                            ...edge,
+                            data: { ...edge.data, distance }
+                        };
+                    }
+                }
+                return edge;
+            })
+        );
+        setLoadingDistances(false);
+        return updatedEdges;
+    }, [calculateDistance]);
 
     // Load flow data from trip ID or query params
     useEffect(() => {
@@ -445,7 +568,10 @@ export default function Canvas() {
                             // Remove per-edge styles and type to let defaultEdgeOptions apply
                             const processedEdges = flowData.edges.map(({ style, type, ...edge }: any) => edge);
                             setNodes(processedNodes);
-                            setEdges(processedEdges);
+                            
+                            // Calculate distances for edges
+                            const edgesWithDistances = await updateEdgesWithDistances(processedNodes, processedEdges);
+                            setEdges(edgesWithDistances);
                             setShouldAutoFit(true);
                         }
                     }
@@ -498,7 +624,7 @@ export default function Canvas() {
         };
 
         loadTripData();
-    }, [router.query.tripId, router.query.flowData, setNodes, setEdges]);
+    }, [router.query.tripId, router.query.flowData, setNodes, setEdges, updateEdgesWithDistances]);
 
     // Update nodes and edges theme when theme changes
     useEffect(() => {
@@ -671,6 +797,7 @@ export default function Canvas() {
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
                 fitView
                 fitViewOptions={{ padding: 0.3, maxZoom: 0.9 }}
                 onInit={(inst) => {
@@ -707,12 +834,15 @@ export default function Canvas() {
             <ChatWidget
                 nodes={nodes}
                 edges={edges}
-                onGraphUpdate={(newNodes, newEdges) => {
+                onGraphUpdate={async (newNodes, newEdges) => {
                     setHistory(prev => [...prev.slice(0, historyIndex + 1), { nodes, edges }]);
                     setHistoryIndex(prev => prev + 1);
                     setNodes(newNodes);
-                    setEdges(newEdges);
-                    debouncedSave(newNodes, newEdges);
+                    
+                    // Calculate distances for new edges
+                    const edgesWithDistances = await updateEdgesWithDistances(newNodes, newEdges);
+                    setEdges(edgesWithDistances);
+                    debouncedSave(newNodes, edgesWithDistances);
                 }}
                 onUndo={() => {
                     if (historyIndex > 0) {
