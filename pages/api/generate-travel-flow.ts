@@ -68,7 +68,7 @@ async function gatherTravelInformation(from: string, to: string, stops?: string)
     const searchPromises = queries.map(query => 
       exa.searchAndContents(query, {
         numResults: 3,
-        text: true
+        text: { maxCharacters: 1000 }
       })
     );
 
