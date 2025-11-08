@@ -3,7 +3,7 @@ Welcome to the NextJS base template bootstrapped using the `create-next-app`. Th
 ## 🚀 Features
 
 - **AI-Powered Travel Planning**: Generate detailed travel itineraries with ReactFlow diagrams
-- **Real-time Travel Information**: Uses Tavily AI to gather up-to-date travel information from the web
+- **Real-time Travel Information**: Uses Exa AI to gather up-to-date travel information from the web
 - **Smart Recommendations**: LLM analyzes real-time data to suggest actual attractions and activities
 - **Google Maps Integration**: Each location includes a clickable link to view on Google Maps
 - **Interactive Flow Diagram**: Visual representation of your entire trip with day-by-day breakdown
@@ -16,14 +16,14 @@ Welcome to the NextJS base template bootstrapped using the `create-next-app`. Th
 Copy `.env.example` to `.env` and add your API keys:
 
 ```bash
-TAVILY_API_KEY=your_tavily_api_key_here
+EXA_API_KEY=your_exa_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
 DATABASE_URL=your_database_url_here
 BETTER_AUTH_SECRET=your_auth_secret_here
 ```
 
 **Get your API keys:**
-- Tavily API: Sign up at [tavily.com](https://tavily.com) 
+- Exa API: Sign up at [exa.ai](https://exa.ai) 
 - OpenAI API: Get from [platform.openai.com](https://platform.openai.com)
 
 ### 2. Install Dependencies
@@ -51,7 +51,7 @@ The `pages/api` directory is mapped to `/api/*`. Files in this directory are tre
 ### Travel Flow Generation Process
 
 1. **User Input**: User clicks "New Trip" button and fills in travel details (From, To, Days, Stops)
-2. **Tavily Search**: The system searches the web for real-time travel information:
+2. **Exa Search**: The system searches the web for real-time travel information:
    - Best attractions in destination
    - Travel guides and routes
    - Popular activities
@@ -71,7 +71,7 @@ The `pages/api` directory is mapped to `/api/*`. Files in this directory are tre
 
 - `pages/index.tsx` - Home page with modal form for trip planning
 - `pages/canvas.tsx` - ReactFlow canvas for displaying travel itineraries
-- `pages/api/generate-travel-flow.ts` - API route that integrates Tavily + OpenAI to generate travel plans
+- `pages/api/generate-travel-flow.ts` - API route that integrates Exa + OpenAI to generate travel plans
 
 ## Learn More
 

@@ -3,7 +3,7 @@ import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { TavilyClient } from 'tavily';
+import Exa from 'exa-js';
 
 const NodeSchema = z.object({
   id: z.string(),
@@ -49,7 +49,7 @@ const AIResponseSchema = z.object({
 });
 
 async function gatherTravelInformation(from: string, to: string, stops?: string) {
-  const tavilyClient = new TavilyClient({ apiKey: process.env.TAVILY_API_KEY });
+  const exa = new Exa(process.env.EXA_API_KEY);
   
   try {
     const queries = [
@@ -66,11 +66,9 @@ async function gatherTravelInformation(from: string, to: string, stops?: string)
     }
 
     const searchPromises = queries.map(query => 
-      tavilyClient.search({
-        query,
-        search_depth: 'basic',
-        max_results: 3,
-        include_answer: true
+      exa.searchAndContents(query, {
+        numResults: 3,
+        text: true
       })
     );
 
@@ -80,17 +78,14 @@ async function gatherTravelInformation(from: string, to: string, stops?: string)
     
     results.forEach((result, idx) => {
       contextInfo += `\nQuery: ${queries[idx]}\n`;
-      if (result.answer) {
-        contextInfo += `Answer: ${result.answer}\n`;
-      }
       result.results?.forEach((item: any) => {
-        contextInfo += `- ${item.title}: ${item.content}\n`;
+        contextInfo += `- ${item.title}: ${item.text || item.url}\n`;
       });
     });
 
     return contextInfo;
   } catch (error) {
-    console.error('Tavily search error:', error);
+    console.error('Exa search error:', error);
     return '\n\n(Unable to fetch real-time travel information)';
   }
 }
@@ -106,9 +101,9 @@ export default async function handler(
   try {
     const { from, to, days, stops } = req.body;
 
-    console.log('🔍 Gathering real-time travel information using Tavily...');
+    console.log('🔍 Gathering real-time travel information using Exa...');
     const travelInfo = await gatherTravelInformation(from, to, stops);
-
+    console.log("travelInfo: ", travelInfo);
     const prompt = `You are an AI travel planner. The user wants to go on a ${days || 7}-day trip from ${from || 'Delhi'} to ${to || 'Goa'}${stops ? ` with stops in ${stops}` : ''}.
 
 ${travelInfo}
@@ -137,31 +132,36 @@ Using the above real-time information from web search, generate a detailed trave
 
 Generate the complete travel flow in JSON format.`;
 
-    console.log('🤖 Generating travel flow with LLM...');
-    const result = await generateObject({
-      model: openai('gpt-4o'),
-      schema: AIResponseSchema,
-      prompt,
-    });
+    try {
+      console.log('🤖 Generating travel flow with LLM...');
+      const result = await generateObject({
+        model: openai('gpt-4o'),
+        schema: AIResponseSchema,
+        prompt,
+      });
 
-    console.log('✅ Travel flow generated successfully');
-    
-    // Ensure all nodes have type: 'custom' to display Google Maps links
-    const processedFlow = {
-      ...result.object.flow,
-      nodes: result.object.flow.nodes.map(node => ({
-        ...node,
-        type: 'custom'
-      }))
-    };
-    
-    return res.status(200).json({
-      success: true,
-      data: {
-        ...result.object,
-        flow: processedFlow
-      }
-    });
+      console.log('✅ Travel flow generated successfully');
+      
+      // Ensure all nodes have type: 'custom' to display Google Maps links
+      const processedFlow = {
+        ...result.object.flow,
+        nodes: result.object.flow.nodes.map(node => ({
+          ...node,
+          type: 'custom'
+        }))
+      };
+      
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...result.object,
+          flow: processedFlow
+        }
+      });
+    } catch (llmError) {
+      console.error('LLM generation error:', llmError);
+      throw new Error('Failed to generate travel plan with AI');
+    }
   } catch (error) {
     console.error('Error generating travel flow:', error);
     return res.status(500).json({
