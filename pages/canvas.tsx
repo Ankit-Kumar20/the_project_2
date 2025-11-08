@@ -15,6 +15,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import ChatWidget from "@/components/ChatWidget";
+import TripDetailsCard from "@/components/TripDetailsCard";
 import { useTheme } from "@/lib/theme-context";
 import { MapPin, Plus, Minus, CornersOut } from "@phosphor-icons/react";
 
@@ -267,6 +268,7 @@ export default function Canvas() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const rfRef = useRef<ReactFlowInstance | null>(null);
   const [shouldAutoFit, setShouldAutoFit] = useState(false);
+  const [tripDetails, setTripDetails] = useState<any>(null);
 
   // Load flow data from trip ID or query params
   useEffect(() => {
@@ -288,6 +290,23 @@ export default function Canvas() {
               setEdges(flowData.edges);
               setShouldAutoFit(true);
             }
+          }
+          
+          if (result.success && result.trip) {
+            setTripDetails({
+              name: result.trip.name,
+              destinations: result.trip.destinations,
+              startDate: result.trip.startDate,
+              endDate: result.trip.endDate,
+              travellers: result.trip.travellers,
+              pace: result.trip.pace,
+              budget: result.trip.budget,
+              interests: result.trip.interests,
+              mustSees: result.trip.mustSees,
+              avoid: result.trip.avoid,
+              mobilityConstraints: result.trip.mobilityConstraints,
+              travelModes: result.trip.travelModes,
+            });
           }
         } catch (error) {
           console.error("Error loading trip data:", error);
@@ -393,6 +412,18 @@ export default function Canvas() {
       >
         ←
       </button>
+      {tripDetails && (
+        <div
+          className="absolute top-[20px] left-1/2 transform -translate-x-1/2 z-[1000] py-[12px] px-[28px] font-normal text-[14px]"
+          style={{
+            background: theme === "dark" ? "#1a1a1a" : "#fff",
+            color: theme === "dark" ? "#fff" : "#000",
+            borderRadius: "30px",
+          }}
+        >
+          {tripDetails.name || tripDetails.destinations || "Trip"}
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -421,6 +452,7 @@ export default function Canvas() {
         />
         <CustomControls />
       </ReactFlow>
+      {tripDetails && <TripDetailsCard tripData={tripDetails} />}
       <ChatWidget />
     </div>
   );
