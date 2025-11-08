@@ -12,7 +12,6 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in
   if (session?.user) {
     router.push("/");
     return null;
@@ -51,11 +50,11 @@ export default function Signup() {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "50px auto", padding: "20px" }}>
+    <div className="max-w-[400px] my-[50px] mx-auto p-5">
       <h1>Sign Up</h1>
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="name" style={{ display: "block", marginBottom: "5px" }}>
+        <div className="mb-[15px]">
+          <label htmlFor="name" className="block mb-[5px]">
             Name:
           </label>
           <input
@@ -64,11 +63,11 @@ export default function Signup() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            style={{ width: "100%", padding: "8px", fontSize: "16px" }}
+            className="w-full p-2 text-base"
           />
         </div>
-        <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="email" style={{ display: "block", marginBottom: "5px" }}>
+        <div className="mb-[15px]">
+          <label htmlFor="email" className="block mb-[5px]">
             Email:
           </label>
           <input
@@ -77,11 +76,11 @@ export default function Signup() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={{ width: "100%", padding: "8px", fontSize: "16px" }}
+            className="w-full p-2 text-base"
           />
         </div>
-        <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="password" style={{ display: "block", marginBottom: "5px" }}>
+        <div className="mb-[15px]">
+          <label htmlFor="password" className="block mb-[5px]">
             Password:
           </label>
           <input
@@ -91,49 +90,31 @@ export default function Signup() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
-            style={{ width: "100%", padding: "8px", fontSize: "16px" }}
+            className="w-full p-2 text-base"
           />
         </div>
         {error && (
-          <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>
+          <div className="text-red-600 mb-[15px]">{error}</div>
         )}
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px",
-            fontSize: "16px",
-            backgroundColor: "#0070f3",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
+          className={`w-full p-2.5 text-base bg-[#0070f3] text-white border-none rounded-[5px] ${
+            loading ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
         >
           {loading ? "Signing up..." : "Sign Up"}
         </button>
       </form>
       <button
         onClick={handleGoogle}
-        style={{
-          width: "100%",
-          padding: "10px",
-          fontSize: "16px",
-          backgroundColor: "#DB4437",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-          marginTop: "12px",
-        }}
+        className="w-full p-2.5 text-base bg-[#DB4437] text-white border-none rounded-[5px] cursor-pointer mt-3"
       >
         Continue with Google
       </button>
-      <p style={{ marginTop: "15px", textAlign: "center" }}>
+      <p className="mt-[15px] text-center">
         Already have an account? <Link href="/login">Sign in</Link>
       </p>
     </div>
   );
 }
-
