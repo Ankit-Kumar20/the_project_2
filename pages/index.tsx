@@ -1,12 +1,12 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useState, useEffect } from "react";
 import styles from "../styles/Home.module.css";
 import { useTheme } from "@/lib/theme-context";
 import { Moon, Sun } from "@phosphor-icons/react";
+import AuthModal from "@/components/AuthModal";
 
 interface Trip {
   id: string;
@@ -45,12 +45,27 @@ const Home: NextPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loadingTrips, setLoadingTrips] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
 
   useEffect(() => {
     if (session?.user) {
       fetchTrips();
     }
   }, [session]);
+
+  useEffect(() => {
+    const path = router.asPath;
+    if (path === "/login") {
+      setAuthMode("login");
+      setAuthModalOpen(true);
+      router.replace("/", undefined, { shallow: true });
+    } else if (path === "/signup") {
+      setAuthMode("signup");
+      setAuthModalOpen(true);
+      router.replace("/", undefined, { shallow: true });
+    }
+  }, [router]);
 
   const fetchTrips = async () => {
     setLoadingTrips(true);
@@ -166,7 +181,23 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <div className="absolute top-[20px] right-[20px]">
+        <div className="absolute top-[20px] right-[20px] flex gap-[10px] items-center">
+          {!session?.user && (
+            <button
+              onClick={() => {
+                setAuthMode("login");
+                setAuthModalOpen(true);
+              }}
+              className="px-[20px] py-[10px] rounded-[24px] border-[1.5px] cursor-pointer text-[14px] font-medium transition-all duration-200"
+              style={{
+                backgroundColor: "var(--hover-bg)",
+                borderColor: "var(--border-color)",
+                color: "var(--text-primary)",
+              }}
+            >
+              Login
+            </button>
+          )}
           <button
             onClick={toggleTheme}
             className="p-[10px] rounded-[24px] border-[1.5px] cursor-pointer flex items-center justify-center transition-all duration-200"
@@ -518,15 +549,15 @@ const Home: NextPage = () => {
               </div>
             )}
           </div>
-        ) : (
-          <div>
-            <p className={styles.description}>
-              Please <Link href="/login">sign in</Link> or{" "}
-              <Link href="/signup">sign up</Link> to continue.
-            </p>
-          </div>
-        )}
+        ) : null}
       </main>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        mode={authMode}
+        onSwitchMode={setAuthMode}
+      />
     </div>
   );
 };
