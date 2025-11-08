@@ -6,6 +6,8 @@ interface NewTripModalProps {
   onClose: () => void;
   name: string;
   setName: (value: string) => void;
+  startingPoint: string;
+  setStartingPoint: (value: string) => void;
   destinations: string;
   setDestinations: (value: string) => void;
   startDate: string;
@@ -37,6 +39,8 @@ export default function NewTripModal({
   onClose,
   name,
   setName,
+  startingPoint,
+  setStartingPoint,
   destinations,
   setDestinations,
   startDate,
@@ -79,7 +83,7 @@ export default function NewTripModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[600px] rounded-[24px] p-8 relative max-h-[90vh] overflow-y-auto transition-colors duration-300"
+        className="w-full max-w-[600px] rounded-[24px] p-8 relative max-h-[90vh] overflow-y-auto transition-colors duration-300 scrollbar-hide"
         style={{ backgroundColor: "var(--bg-primary)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -106,8 +110,9 @@ export default function NewTripModal({
           </button>
         </div>
 
-        <div className="space-y-[16px]">
-          <div>
+        <div className="space-y-[20px]">
+          {/* Basic Info */}
+          <div className="space-y-[12px]">
             <input
               type="text"
               placeholder="Trip Name (optional)"
@@ -115,104 +120,114 @@ export default function NewTripModal({
               onChange={(e) => setName(e.target.value)}
               className={inputClass}
               style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
                 color: "var(--text-primary)",
               }}
             />
-          </div>
 
-          <div>
-            <input
-              type="text"
-              placeholder="Destination(s) (e.g., Paris, Rome, Barcelona)"
-              value={destinations}
-              onChange={(e) => setDestinations(e.target.value)}
-              className={inputClass}
-              style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
-                color: "var(--text-primary)",
-              }}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-[12px]">
-            <div>
-              <label
-                className={labelClass}
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Start Date
-              </label>
+            <div className="grid grid-cols-2 gap-[12px]">
               <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                type="text"
+                placeholder="Starting Point"
+                value={startingPoint}
+                onChange={(e) => setStartingPoint(e.target.value)}
                 className={inputClass}
                 style={{
-                  backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                  backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
                   color: "var(--text-primary)",
                 }}
               />
-            </div>
-            <div>
-              <label
-                className={labelClass}
-                style={{ color: "var(--text-secondary)" }}
-              >
-                End Date
-              </label>
+
               <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                type="text"
+                placeholder="Destination(s)"
+                value={destinations}
+                onChange={(e) => setDestinations(e.target.value)}
                 className={inputClass}
                 style={{
-                  backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                  backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
                   color: "var(--text-primary)",
                 }}
               />
             </div>
           </div>
 
-          <div>
-            <input
-              type="text"
-              placeholder="Number of Travellers (e.g., 2 adults, 1 child)"
-              value={travellers}
-              onChange={(e) => setTravellers(e.target.value)}
-              className={inputClass}
-              style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
-                color: "var(--text-primary)",
-              }}
-            />
+          {/* Dates & Details */}
+          <div className="space-y-[12px]">
+            <div className="grid grid-cols-2 gap-[12px]">
+              <div>
+                <label
+                  className={labelClass}
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className={inputClass}
+                  style={{
+                    backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
+              <div>
+                <label
+                  className={labelClass}
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className={inputClass}
+                  style={{
+                    backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-[12px]">
+              <input
+                type="text"
+                placeholder="Travellers (e.g., 2 adults)"
+                value={travellers}
+                onChange={(e) => setTravellers(e.target.value)}
+                className={inputClass}
+                style={{
+                  backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
+                  color: "var(--text-primary)",
+                }}
+              />
+
+              <div>
+                <select
+                  value={pace}
+                  onChange={(e) => setPace(e.target.value)}
+                  className="w-full px-[16px] py-[12px] pr-[40px] text-[14px] rounded-[24px] border-none transition-colors duration-200 outline-none appearance-none bg-no-repeat bg-right"
+                  style={{
+                    backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
+                    color: "var(--text-primary)",
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='${theme === "dark" ? "%23ffffff" : "%23000000"}'%3E%3Cpath d='M4.5 6l3.5 3.5L11.5 6z'/%3E%3C/svg%3E")`,
+                    backgroundPosition: "right 16px center",
+                  }}
+                >
+                  <option value="relaxed">Relaxed Pace</option>
+                  <option value="balanced">Balanced Pace</option>
+                  <option value="packed">Packed Pace</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label
-              className={labelClass}
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Travel Pace
-            </label>
-            <select
-              value={pace}
-              onChange={(e) => setPace(e.target.value)}
-              className="w-full px-[16px] py-[12px] pr-[40px] text-[14px] rounded-[24px] border-none transition-colors duration-200 outline-none appearance-none bg-no-repeat bg-right"
-              style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
-                color: "var(--text-primary)",
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='${theme === "dark" ? "%23ffffff" : "%23000000"}'%3E%3Cpath d='M4.5 6l3.5 3.5L11.5 6z'/%3E%3C/svg%3E")`,
-                backgroundPosition: "right 16px center",
-              }}
-            >
-              <option value="relaxed">Relaxed</option>
-              <option value="balanced">Balanced</option>
-              <option value="packed">Packed</option>
-            </select>
-          </div>
-
-          <div>
+          {/* Preferences */}
+          <div className="space-y-[12px]">
             <input
               type="text"
               placeholder="Budget (e.g., $3000, moderate)"
@@ -220,13 +235,11 @@ export default function NewTripModal({
               onChange={(e) => setBudget(e.target.value)}
               className={inputClass}
               style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
                 color: "var(--text-primary)",
               }}
             />
-          </div>
 
-          <div>
             <input
               type="text"
               placeholder="Interests (e.g., food, art, history, adventure)"
@@ -234,13 +247,14 @@ export default function NewTripModal({
               onChange={(e) => setInterests(e.target.value)}
               className={inputClass}
               style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
                 color: "var(--text-primary)",
               }}
             />
           </div>
 
-          <div>
+          {/* Optional Details */}
+          <div className="space-y-[12px]">
             <input
               type="text"
               placeholder="Must-See Places (optional)"
@@ -248,41 +262,37 @@ export default function NewTripModal({
               onChange={(e) => setMustSees(e.target.value)}
               className={inputClass}
               style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
                 color: "var(--text-primary)",
               }}
             />
-          </div>
 
-          <div>
-            <input
-              type="text"
-              placeholder="Things to Avoid (optional)"
-              value={avoid}
-              onChange={(e) => setAvoid(e.target.value)}
-              className={inputClass}
-              style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
-                color: "var(--text-primary)",
-              }}
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-[12px]">
+              <input
+                type="text"
+                placeholder="Things to Avoid (optional)"
+                value={avoid}
+                onChange={(e) => setAvoid(e.target.value)}
+                className={inputClass}
+                style={{
+                  backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
+                  color: "var(--text-primary)",
+                }}
+              />
 
-          <div>
-            <input
-              type="text"
-              placeholder="Mobility Constraints (optional)"
-              value={mobilityConstraints}
-              onChange={(e) => setMobilityConstraints(e.target.value)}
-              className={inputClass}
-              style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
-                color: "var(--text-primary)",
-              }}
-            />
-          </div>
+              <input
+                type="text"
+                placeholder="Mobility Needs (optional)"
+                value={mobilityConstraints}
+                onChange={(e) => setMobilityConstraints(e.target.value)}
+                className={inputClass}
+                style={{
+                  backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
+                  color: "var(--text-primary)",
+                }}
+              />
+            </div>
 
-          <div>
             <input
               type="text"
               placeholder="Travel Mode Preferences (e.g., train, car, walking)"
@@ -290,7 +300,7 @@ export default function NewTripModal({
               onChange={(e) => setTravelModes(e.target.value)}
               className={inputClass}
               style={{
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
                 color: "var(--text-primary)",
               }}
             />
@@ -304,7 +314,7 @@ export default function NewTripModal({
             style={{
               backgroundColor: cancelHover
                 ? "var(--text-primary)"
-                : theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                : theme === "dark" ? "#2a2a2a" : "#f3f4f6",
               color: cancelHover ? "var(--bg-primary)" : "var(--text-primary)",
             }}
             onMouseEnter={() => setCancelHover(true)}
@@ -322,7 +332,7 @@ export default function NewTripModal({
                   ? theme === "dark" ? "#333" : "#ccc"
                   : submitHover
                   ? "var(--text-primary)"
-                  : theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                  : theme === "dark" ? "#2a2a2a" : "#f3f4f6",
               color:
                 loading || !destinations
                   ? theme === "dark" ? "#666" : "#999"
