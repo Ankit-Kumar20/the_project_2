@@ -109,21 +109,23 @@ const CustomNode = ({
     info?: string;
     day?: number;
     coordinates?: { lat: number; lng: number };
+    restaurants?: Array<{
+      name: string;
+      description?: string;
+      cuisine?: string;
+      priceRange?: string;
+    }>;
   };
 }) => {
   const { theme } = useTheme();
-  // Debug: Log node data to console
-  console.log("CustomNode rendered:", {
-    label: data.label,
-    hasGoogleMapsLink: !!data.googleMapsLink,
-    googleMapsLink: data.googleMapsLink,
-  });
-
+  const [showRestaurants, setShowRestaurants] = useState(false);
+  
   const isDark = theme === "dark";
+  const hasRestaurants = data.restaurants && data.restaurants.length > 0;
 
   return (
     <div
-      className="py-[14px] px-[18px] rounded-[24px] min-w-[180px] text-center font-normal border-none shadow-none"
+      className="py-[14px] px-[18px] rounded-[24px] min-w-[180px] text-center font-normal border-none shadow-none relative"
       style={{
         background: isDark ? "#1a1a1a" : "#ffffff",
         color: isDark ? "#ffffff" : "#000000",
@@ -131,6 +133,98 @@ const CustomNode = ({
       }}
     >
       <Handle type="target" position={Position.Top} />
+      
+      {/* Restaurant Button */}
+      {hasRestaurants && (
+        <div
+          className="absolute top-[-8px] right-[-8px] w-[28px] h-[28px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-200"
+          style={{
+            background: isDark ? "#ff6b6b" : "#ff6b6b",
+            color: "#fff",
+            zIndex: 10,
+          }}
+          onMouseEnter={() => setShowRestaurants(true)}
+          onMouseLeave={() => setShowRestaurants(false)}
+        >
+          🍽️
+        </div>
+      )}
+
+      {/* Restaurant Popup */}
+      {showRestaurants && hasRestaurants && (
+        <div
+          className="absolute top-[30px] right-[-10px] min-w-[280px] max-w-[320px] rounded-[16px] p-[16px] shadow-lg z-[1000]"
+          style={{
+            background: isDark ? "#2a2a2a" : "#ffffff",
+            color: isDark ? "#fff" : "#000",
+            border: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`,
+          }}
+          onMouseEnter={() => setShowRestaurants(true)}
+          onMouseLeave={() => setShowRestaurants(false)}
+        >
+          <div
+            className="text-[13px] font-semibold mb-[12px] pb-[8px]"
+            style={{ borderBottom: `1px solid ${isDark ? "#404040" : "#e0e0e0"}` }}
+          >
+            🍽️ Recommended Restaurants
+          </div>
+          <div className="space-y-[12px] max-h-[300px] overflow-y-auto">
+            {data.restaurants!.map((restaurant, idx) => (
+              <div
+                key={idx}
+                className="text-left pb-[10px]"
+                style={{
+                  borderBottom:
+                    idx < data.restaurants!.length - 1
+                      ? `1px solid ${isDark ? "#333" : "#f0f0f0"}`
+                      : "none",
+                }}
+              >
+                <div
+                  className="font-semibold text-[12px] mb-[4px] hover:underline cursor-pointer inline-block"
+                  style={{ color: isDark ? "#fff" : "#000" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(
+                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        `${restaurant.name} ${data.label}`
+                      )}`,
+                      '_blank'
+                    );
+                  }}
+                >
+                  📍 {restaurant.name}
+                </div>
+                {restaurant.cuisine && (
+                  <div
+                    className="text-[11px] mb-[2px]"
+                    style={{ color: isDark ? "#a0a0a0" : "#666" }}
+                  >
+                    🍴 {restaurant.cuisine}
+                  </div>
+                )}
+                {restaurant.priceRange && (
+                  <div
+                    className="text-[11px] mb-[2px]"
+                    style={{ color: isDark ? "#a0a0a0" : "#666" }}
+                  >
+                    💰 {restaurant.priceRange}
+                  </div>
+                )}
+                {restaurant.description && (
+                  <div
+                    className="text-[10px] mt-[4px]"
+                    style={{ color: isDark ? "#888" : "#777" }}
+                  >
+                    {restaurant.description}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <div
         className="font-semibold mb-[6px] text-[14px]"
         style={{ color: isDark ? "#fff" : "#000" }}

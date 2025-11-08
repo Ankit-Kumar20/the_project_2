@@ -26,7 +26,13 @@ const NodeSchema = z.object({
     coordinates: z.object({
       lat: z.number(),
       lng: z.number()
-    }).optional()
+    }).optional(),
+    restaurants: z.array(z.object({
+      name: z.string(),
+      description: z.string().optional(),
+      cuisine: z.string().optional(),
+      priceRange: z.string().optional()
+    })).optional()
   }),
   position: z.object({
     x: z.number(),
@@ -51,6 +57,30 @@ const AIResponseSchema = z.object({
   reply: z.string(),
   flow: FlowSchema
 });
+
+async function gatherRestaurantInfo(location: string) {
+  const exa = new Exa(process.env.EXA_API_KEY);
+  
+  try {
+    const result = await exa.searchAndContents(
+      `Most popular and famous restaurants to eat in ${location} highly rated must-visit dining`,
+      {
+        numResults: 5,
+        text: { maxCharacters: 500 }
+      }
+    );
+
+    let restaurantInfo = '';
+    result.results?.forEach((item: any) => {
+      restaurantInfo += `- ${item.title}: ${item.text || ''}\n`;
+    });
+
+    return restaurantInfo;
+  } catch (error) {
+    console.error('Restaurant search error:', error);
+    return '';
+  }
+}
 
 async function gatherTravelInformation(from: string, to: string, stops?: string) {
   const exa = new Exa(process.env.EXA_API_KEY);
@@ -144,6 +174,21 @@ export default async function handler(
     const toLocation = destinations;
     const travelInfo = await gatherTravelInformation(fromLocation, toLocation, mustSees);
     
+    // Gather restaurant information for key locations
+    console.log('🍽️ Gathering restaurant information using Exa...');
+    const locations = [toLocation];
+    if (mustSees) {
+      locations.push(...mustSees.split(',').map(s => s.trim()));
+    }
+    
+    const restaurantPromises = locations.map(loc => gatherRestaurantInfo(loc));
+    const restaurantResults = await Promise.all(restaurantPromises);
+    
+    let restaurantContext = '\n\n=== RESTAURANT RECOMMENDATIONS FROM WEB SEARCH ===\n';
+    locations.forEach((loc, idx) => {
+      restaurantContext += `\nRestaurants in ${loc}:\n${restaurantResults[idx]}`;
+    });
+    
     const prompt = `You are an AI travel planner. Create a personalized ${days}-day trip itinerary with the following details:
 STARTINGPOINT: ${startingPoint}
 DESTINATIONS: ${destinations}
@@ -160,6 +205,8 @@ ${travelModes ? `PREFERRED TRAVEL MODES: ${travelModes}` : ''}
 
 ${travelInfo}
 
+${restaurantContext}
+
 Using the above information, generate a detailed travel flow with the following requirements:
 
 1. Create nodes for each day of the journey (${days} days total)
@@ -168,7 +215,7 @@ Using the above information, generate a detailed travel flow with the following 
    - Balanced: 3-4 activities per day
    - Packed: 5-6 activities per day with efficient scheduling
 3. Each node should contain:
-   - label: Name of the location/activity
+   - label: Name of the location/activity WITHOUT day prefix (e.g., "Gateway of India", "Arrival at Mumbai", NOT "Day 1: Gateway of India")
    - info: Brief description
    - day: Which day of the trip (1-${days})
    - activities: Array of specific activities matching the user's interests
@@ -179,6 +226,12 @@ Using the above information, generate a detailed travel flow with the following 
    - tips: Helpful tips, especially regarding accessibility if mobility constraints mentioned
    - googleMapsLink: Google Maps URL format "https://www.google.com/maps/search/?api=1&query=PLACE_NAME"
    - coordinates: Approximate latitude and longitude
+   - restaurants: Array of 3-5 ONLY POPULAR and well-known restaurants near this location from the restaurant search results above. Include ONLY highly-rated, famous, or must-visit restaurants. Each restaurant should have:
+     * name: Restaurant name (must be a real, popular establishment)
+     * description: Brief description of what they serve and why they're popular
+     * cuisine: Type of cuisine
+     * priceRange: Price range (e.g., "$", "$$", "$$$")
+     * IMPORTANT: Only include restaurants if they are genuinely popular/famous. If no popular restaurants found, omit this field entirely.
 
 4. IMPORTANT considerations:
    - Focus activities around specified interests (${interests || 'general tourism'})

@@ -22,7 +22,13 @@ const NodeSchema = z.object({
     coordinates: z.object({
       lat: z.number(),
       lng: z.number()
-    }).optional()
+    }).optional(),
+    restaurants: z.array(z.object({
+      name: z.string(),
+      description: z.string().optional(),
+      cuisine: z.string().optional(),
+      priceRange: z.string().optional()
+    })).optional()
   }),
   position: z.object({
     x: z.number(),
@@ -50,6 +56,30 @@ const AIResponseSchema = z.object({
   reply: z.string(),
   flow: FlowSchema
 });
+
+async function gatherRestaurantInfo(location: string) {
+  const exa = new Exa(process.env.EXA_API_KEY);
+  
+  try {
+    const result = await exa.searchAndContents(
+      `Most popular and famous restaurants to eat in ${location} highly rated must-visit dining`,
+      {
+        numResults: 5,
+        text: { maxCharacters: 500 }
+      }
+    );
+
+    let restaurantInfo = '';
+    result.results?.forEach((item: any) => {
+      restaurantInfo += `- ${item.title}: ${item.text || ''}\n`;
+    });
+
+    return restaurantInfo;
+  } catch (error) {
+    console.error('Restaurant search error:', error);
+    return '';
+  }
+}
 
 async function gatherTravelInformation(from: string, to: string, stops?: string) {
   const exa = new Exa(process.env.EXA_API_KEY);
@@ -126,9 +156,27 @@ export default async function handler(
     console.log('🔍 Gathering real-time travel information using Exa...');
     const travelInfo = await gatherTravelInformation(fromLocation, toLocation, stops);
     console.log("travelInfo: ", travelInfo);
+
+    // Gather restaurant information for key locations
+    console.log('🍽️ Gathering restaurant information using Exa...');
+    const locations = [toLocation];
+    if (stops) {
+      locations.push(...stops.split(',').map(s => s.trim()));
+    }
+    
+    const restaurantPromises = locations.map(loc => gatherRestaurantInfo(loc));
+    const restaurantResults = await Promise.all(restaurantPromises);
+    
+    let restaurantContext = '\n\n=== RESTAURANT RECOMMENDATIONS FROM WEB SEARCH ===\n';
+    locations.forEach((loc, idx) => {
+      restaurantContext += `\nRestaurants in ${loc}:\n${restaurantResults[idx]}`;
+    });
+    
     const prompt = `You are an AI travel planner. The user wants to go on a ${days || 7}-day trip from ${fromLocation} to ${toLocation}${stops ? ` with stops in ${stops}` : ''}.
 
 ${travelInfo}
+
+${restaurantContext}
 
 Using the above real-time information from web search, generate a detailed travel flow showing the GEOGRAPHICAL JOURNEY with the following requirements:
 
@@ -144,7 +192,7 @@ Using the above real-time information from web search, generate a detailed trave
    - Include specific tourist attractions, beaches, forts, temples, markets, restaurants, viewpoints, etc.
 
 3. Each node MUST contain:
-   - label: EXACT name of the physical location (e.g., "Gateway of India", "Baga Beach", "Taj Mahal", "Mysore Palace")
+   - label: EXACT name of the physical location WITHOUT day prefix (e.g., "Gateway of India", "Baga Beach", "Taj Mahal", "Arrival at Mumbai", NOT "Day 1: Gateway of India")
    - info: Brief description of the location and why it's worth visiting
    - day: Which day of the trip (1-${days || 7})
    - activities: Array of 3-5 specific things to DO at this location
@@ -155,6 +203,12 @@ Using the above real-time information from web search, generate a detailed trave
    - tips: Array of 2-3 practical tips for visiting this place
    - googleMapsLink: "https://www.google.com/maps/search/?api=1&query=EXACT_LOCATION_NAME" (URL-encoded)
    - coordinates: Accurate lat/lng for the exact location
+   - restaurants: Array of 3-5 ONLY POPULAR and well-known restaurants near this location from the restaurant search results above. Include ONLY highly-rated, famous, or must-visit restaurants. Each restaurant should have:
+     * name: Restaurant name (must be a real, popular establishment)
+     * description: Brief description of what they serve and why they're popular
+     * cuisine: Type of cuisine
+     * priceRange: Price range (e.g., "$", "$$", "$$$")
+     * IMPORTANT: Only include restaurants if they are genuinely popular/famous. If no popular restaurants found, omit this field entirely.
 
 4. Node types based on location category:
    - 'city': Major cities/towns
