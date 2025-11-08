@@ -1000,11 +1000,117 @@ export default function Canvas() {
 
   // Handle new connections
   const onConnect = useCallback(
-    (params: Connection) => {
-      setEdges((eds) => addEdge(params, eds));
+    async (params: Connection) => {
+      // Add the edge first
+      const addedEdge = addEdge(params, edges);
+      setEdges(addedEdge);
+
+      // Find source and target nodes to calculate distance
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const targetNode = nodes.find((n) => n.id === params.target);
+
+      if (sourceNode && targetNode) {
+        const distance = await calculateDistance(sourceNode, targetNode);
+        if (distance) {
+          // Update the edge with distance
+          const updatedEdges = addedEdge.map((edge) => {
+            if (edge.source === params.source && edge.target === params.target) {
+              return {
+                ...edge,
+                data: { ...edge.data, distance },
+              };
+            }
+            return edge;
+          });
+          setEdges(updatedEdges);
+          
+          // Save with distance
+          debouncedSave(nodes, updatedEdges);
+          return;
+        }
+      }
+      
+      // Save without distance if no coordinates
+      debouncedSave(nodes, addedEdge);
     },
-    [setEdges]
+    [nodes, edges, setEdges, calculateDistance, debouncedSave]
   );
+
+  // Handle drop event to create new nodes from dragged insights
+  const onDrop = useCallback(
+    async (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
+      const data = event.dataTransfer.getData('application/reactflow');
+
+      if (!data) return;
+
+      try {
+        const droppedData = JSON.parse(data);
+        
+        if (droppedData.type === 'insight' && rfRef.current) {
+          const position = rfRef.current.screenToFlowPosition({
+            x: event.clientX - reactFlowBounds.left,
+            y: event.clientY - reactFlowBounds.top,
+          });
+
+          // Geocode the location to get coordinates
+          let coordinates: { lat: number; lng: number } | null = null;
+          let googleMapsLink: string | null = null;
+          
+          if (droppedData.data.location) {
+            try {
+              const geocodeResponse = await fetch('/api/geocode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ location: droppedData.data.location }),
+              });
+              
+              const geocodeData = await geocodeResponse.json();
+              
+              if (geocodeData.success && geocodeData.coordinates) {
+                coordinates = {
+                  lat: geocodeData.coordinates.lat,
+                  lng: geocodeData.coordinates.lng,
+                };
+                googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  droppedData.data.location
+                )}`;
+              }
+            } catch (error) {
+              console.error('Error geocoding location:', error);
+            }
+          }
+
+          const newNode: Node = {
+            id: `node-${Date.now()}`,
+            type: 'custom',
+            position,
+            data: {
+              label: droppedData.data.location || droppedData.data.label,
+              info: `${droppedData.data.label}\n\n${droppedData.data.info}`,
+              coordinates: coordinates || undefined,
+              googleMapsLink: googleMapsLink || undefined,
+            },
+          };
+
+          setNodes((nds) => [...nds, newNode]);
+          
+          // Save after adding the new node
+          debouncedSave([...nodes, newNode], edges);
+        }
+      } catch (error) {
+        console.error('Error parsing dropped data:', error);
+      }
+    },
+    [nodes, edges, setNodes, debouncedSave]
+  );
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
 
   // Show loading state
   if (isPending || isLoadingTrip) {
@@ -1080,6 +1186,8 @@ export default function Canvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView

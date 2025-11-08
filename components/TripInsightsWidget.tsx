@@ -307,6 +307,20 @@ function Section({
         {items.map((item, idx) => (
           <div
             key={idx}
+            draggable={showPhotos} // Only make draggable for must experience and hidden gems
+            onDragStart={(e) => {
+              if (showPhotos) {
+                e.dataTransfer.setData('application/reactflow', JSON.stringify({
+                  type: 'insight',
+                  data: {
+                    label: item.title,
+                    info: item.description,
+                    location: item.location,
+                  }
+                }));
+                e.dataTransfer.effectAllowed = 'move';
+              }
+            }}
             className="rounded-[16px] p-[14px] transition-all"
             style={{
               background: isWarning
@@ -319,6 +333,17 @@ function Section({
               border: isWarning 
                 ? `1px solid ${isDark ? '#ff6b6b33' : '#ff6b6b44'}` 
                 : 'none',
+              cursor: showPhotos ? 'grab' : 'default',
+            }}
+            onMouseDown={(e) => {
+              if (showPhotos && e.currentTarget.style) {
+                e.currentTarget.style.cursor = 'grabbing';
+              }
+            }}
+            onMouseUp={(e) => {
+              if (showPhotos && e.currentTarget.style) {
+                e.currentTarget.style.cursor = 'grab';
+              }
             }}
           >
             {/* Photo */}
