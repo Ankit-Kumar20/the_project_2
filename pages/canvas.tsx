@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "@/lib/auth-client";
 import ReactFlow, {
@@ -9,13 +9,14 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   Background,
-  Controls,
   NodeTypes,
+  useReactFlow,
+  ReactFlowInstance,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import ChatWidget from "@/components/ChatWidget";
 import { useTheme } from "@/lib/theme-context";
-import { MapPin } from "@phosphor-icons/react";
+import { MapPin, Plus, Minus, CornersOut } from "@phosphor-icons/react";
 
 // Custom node component - Simple black and white wireframe style
 const CustomNode = ({
@@ -160,12 +161,112 @@ const initialEdges: Edge[] = [
   },
 ];
 
+// Custom Controls Component
+const CustomControls = () => {
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const { theme } = useTheme();
+
+  const buttonClass =
+    "w-[44px] h-[44px] border-none rounded-full cursor-pointer font-light text-[18px] flex items-center justify-center transition-all duration-200";
+
+  return (
+    <div className="absolute bottom-[20px] left-[20px] z-[1000] flex flex-col gap-[8px]">
+      <button
+        onClick={() => zoomIn()}
+        className={buttonClass}
+        style={{
+          background: theme === "dark" ? "#1a1a1a" : "#fff",
+          color: theme === "dark" ? "#fff" : "#000",
+        }}
+        onMouseEnter={(e) => {
+          if (theme === "dark") {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.color = "#000";
+          } else {
+            e.currentTarget.style.background = "#000";
+            e.currentTarget.style.color = "#fff";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (theme === "dark") {
+            e.currentTarget.style.background = "#1a1a1a";
+            e.currentTarget.style.color = "#fff";
+          } else {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.color = "#000";
+          }
+        }}
+      >
+        <Plus size={20} weight="bold" />
+      </button>
+      <button
+        onClick={() => zoomOut()}
+        className={buttonClass}
+        style={{
+          background: theme === "dark" ? "#1a1a1a" : "#fff",
+          color: theme === "dark" ? "#fff" : "#000",
+        }}
+        onMouseEnter={(e) => {
+          if (theme === "dark") {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.color = "#000";
+          } else {
+            e.currentTarget.style.background = "#000";
+            e.currentTarget.style.color = "#fff";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (theme === "dark") {
+            e.currentTarget.style.background = "#1a1a1a";
+            e.currentTarget.style.color = "#fff";
+          } else {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.color = "#000";
+          }
+        }}
+      >
+        <Minus size={20} weight="bold" />
+      </button>
+      <button
+        onClick={() => fitView({ padding: 0.3, maxZoom: 0.9 })}
+        className={buttonClass}
+        style={{
+          background: theme === "dark" ? "#1a1a1a" : "#fff",
+          color: theme === "dark" ? "#fff" : "#000",
+        }}
+        onMouseEnter={(e) => {
+          if (theme === "dark") {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.color = "#000";
+          } else {
+            e.currentTarget.style.background = "#000";
+            e.currentTarget.style.color = "#fff";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (theme === "dark") {
+            e.currentTarget.style.background = "#1a1a1a";
+            e.currentTarget.style.color = "#fff";
+          } else {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.color = "#000";
+          }
+        }}
+      >
+        <CornersOut size={20} weight="bold" />
+      </button>
+    </div>
+  );
+};
+
 export default function Canvas() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const { theme } = useTheme();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+  const rfRef = useRef<ReactFlowInstance | null>(null);
+  const [shouldAutoFit, setShouldAutoFit] = useState(false);
 
   // Load flow data from trip ID or query params
   useEffect(() => {
@@ -185,6 +286,7 @@ export default function Canvas() {
               }));
               setNodes(processedNodes);
               setEdges(flowData.edges);
+              setShouldAutoFit(true);
             }
           }
         } catch (error) {
@@ -202,6 +304,7 @@ export default function Canvas() {
             }));
             setNodes(processedNodes);
             setEdges(flowData.edges);
+            setShouldAutoFit(true);
           }
         } catch (error) {
           console.error("Error parsing flow data:", error);
@@ -218,6 +321,22 @@ export default function Canvas() {
       router.push("/login");
     }
   }, [session, isPending, router]);
+
+  // One-time fit after async data loads
+  useEffect(() => {
+    if (!rfRef.current || !shouldAutoFit || nodes.length === 0) return;
+    let raf1 = 0, raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        rfRef.current?.fitView({ padding: 0.3, maxZoom: 0.9, duration: 200 });
+        setShouldAutoFit(false);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [shouldAutoFit, nodes.length]);
 
   // Handle new connections
   const onConnect = useCallback(
@@ -282,7 +401,11 @@ export default function Canvas() {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.3, maxZoom: 0.9 }}
+        onInit={(inst) => {
+          rfRef.current = inst;
+          if (nodes.length) inst.fitView({ padding: 0.3, maxZoom: 0.9 });
+        }}
         defaultEdgeOptions={{
           style: {
             stroke: theme === "dark" ? "#fff" : "#000",
@@ -292,11 +415,11 @@ export default function Canvas() {
         }}
       >
         <Background
-          color={theme === "dark" ? "#2a2a2a" : "#e0e0e0"}
+          color={theme === "dark" ? "#404040" : "#bfbfbf"}
           gap={16}
-          size={1}
+          size={2}
         />
-        <Controls />
+        <CustomControls />
       </ReactFlow>
       <ChatWidget />
     </div>
