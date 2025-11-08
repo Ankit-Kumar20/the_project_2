@@ -12,6 +12,8 @@ import ReactFlow, {
     NodeTypes,
     useReactFlow,
     ReactFlowInstance,
+    Handle,
+    Position,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import ChatWidget from "@/components/ChatWidget";
@@ -48,6 +50,7 @@ const CustomNode = ({
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
         >
+            <Handle type="target" position={Position.Top} />
             <div
                 className="font-semibold mb-[6px] text-[14px]"
                 style={{ color: isDark ? "#fff" : "#000" }}
@@ -91,6 +94,7 @@ const CustomNode = ({
                     View on Maps
                 </a>
             )}
+            <Handle type="source" position={Position.Bottom} />
         </div>
     );
 };
@@ -146,9 +150,6 @@ const initialEdges: Edge[] = [
         target: "2",
         animated: false,
         label: "4h drive",
-        style: { stroke: "#000", strokeWidth: 1.5 },
-        labelStyle: { fill: "#000", fontWeight: 400, fontSize: 11 },
-        labelBgStyle: { fill: "#fff", fillOpacity: 0.9 },
     },
     {
         id: "e2-3",
@@ -156,9 +157,6 @@ const initialEdges: Edge[] = [
         target: "3",
         animated: false,
         label: "5h drive",
-        style: { stroke: "#000", strokeWidth: 1.5 },
-        labelStyle: { fill: "#000", fontWeight: 400, fontSize: 11 },
-        labelBgStyle: { fill: "#fff", fillOpacity: 0.9 },
     },
 ];
 
@@ -264,8 +262,8 @@ export default function Canvas() {
     const router = useRouter();
     const { data: session, isPending } = useSession();
     const { theme } = useTheme();
-    const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>(initialEdges);
     const rfRef = useRef<ReactFlowInstance | null>(null);
     const [shouldAutoFit, setShouldAutoFit] = useState(false);
     const [tripDetails, setTripDetails] = useState<any>(null);
@@ -291,8 +289,10 @@ export default function Canvas() {
                                 ...node,
                                 type: node.type || "custom",
                             }));
+                            // Remove per-edge styles to let defaultEdgeOptions apply
+                            const processedEdges = flowData.edges.map(({ style, ...edge }: any) => edge);
                             setNodes(processedNodes);
-                            setEdges(flowData.edges);
+                            setEdges(processedEdges);
                             setShouldAutoFit(true);
                         }
                     }
@@ -326,8 +326,10 @@ export default function Canvas() {
                             ...node,
                             type: node.type || "custom",
                         }));
+                        // Remove per-edge styles to let defaultEdgeOptions apply
+                        const processedEdges = flowData.edges.map(({ style, ...edge }: any) => edge);
                         setNodes(processedNodes);
-                        setEdges(flowData.edges);
+                        setEdges(processedEdges);
                         setShouldAutoFit(true);
                     }
                 } catch (error) {
