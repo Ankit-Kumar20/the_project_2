@@ -1,0 +1,1 @@
+ALTER TABLE "trips" ADD COLUMN "starting_point" text NOT NULL;

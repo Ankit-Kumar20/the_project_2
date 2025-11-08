@@ -115,7 +115,7 @@ export default function NewTripModal({
           <div className="space-y-[12px]">
             <input
               type="text"
-              placeholder="Trip Name (optional)"
+              placeholder="Trip Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={inputClass}

@@ -102,12 +102,31 @@ export default async function handler(
   }
 
   try {
-    const { from, to, days, stops } = req.body;
+    // Accept startingPoint/destinations from database fields, or fallback to from/to for backward compatibility
+    const { 
+      startingPoint, 
+      destinations, 
+      from, 
+      to, 
+      days, 
+      stops 
+    } = req.body;
+
+    // Map database fields to internal variables
+    const fromLocation = startingPoint || from;
+    const toLocation = destinations || to;
+
+    if (!fromLocation || !toLocation) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Both startingPoint (or from) and destinations (or to) are required' 
+      });
+    }
 
     console.log('🔍 Gathering real-time travel information using Exa...');
-    const travelInfo = await gatherTravelInformation(from, to, stops);
+    const travelInfo = await gatherTravelInformation(fromLocation, toLocation, stops);
     console.log("travelInfo: ", travelInfo);
-    const prompt = `You are an AI travel planner. The user wants to go on a ${days || 7}-day trip from ${from || 'Delhi'} to ${to || 'Goa'}${stops ? ` with stops in ${stops}` : ''}.
+    const prompt = `You are an AI travel planner. The user wants to go on a ${days || 7}-day trip from ${fromLocation} to ${toLocation}${stops ? ` with stops in ${stops}` : ''}.
 
 ${travelInfo}
 
@@ -119,8 +138,8 @@ Using the above real-time information from web search, generate a detailed trave
    - Activities should be listed inside the node's activities array, not as separate nodes
    
 2. Create 12-20 location nodes spread across ${days || 7} days
-   - Start with ${from || 'Delhi'}
-   - End with ${to || 'Goa'}
+   - Start with ${fromLocation}
+   - End with ${toLocation}
    - Include stops at: ${stops || 'interesting places along the route'}
    - Include specific tourist attractions, beaches, forts, temples, markets, restaurants, viewpoints, etc.
 

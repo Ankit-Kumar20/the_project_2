@@ -111,7 +111,8 @@ export default async function handler(
     }
 
     const { 
-      name, 
+      name,
+      startingPoint,
       destinations, 
       startDate, 
       endDate, 
@@ -138,10 +139,13 @@ export default async function handler(
     }
 
     console.log('🔍 Gathering real-time travel information using Exa...');
-    const travelInfo = await gatherTravelInformation(destinations, destinations, mustSees);
+    // Use startingPoint as 'from' and destinations as 'to'
+    const fromLocation = startingPoint;
+    const toLocation = destinations;
+    const travelInfo = await gatherTravelInformation(fromLocation, toLocation, mustSees);
     
     const prompt = `You are an AI travel planner. Create a personalized ${days}-day trip itinerary with the following details:
-
+STARTINGPOINT: ${startingPoint}
 DESTINATIONS: ${destinations}
 ${startDate ? `START DATE: ${startDate}` : ''}
 ${endDate ? `END DATE: ${endDate}` : ''}
@@ -215,6 +219,7 @@ Using the above information, generate a detailed travel flow with the following 
     const [newTrip] = await db.insert(trips).values({
       userId: session.user.id,
       name: tripName,
+      startingPoint: startingPoint,
       destinations,
       startDate: startDate || null,
       endDate: endDate || null,

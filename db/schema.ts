@@ -69,6 +69,7 @@ export const trips = pgTable("trips", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
+  startingPoint: text("starting_point").notNull(),
   destinations: text("destinations").notNull(),
   startDate: varchar("start_date", { length: 50 }),
   endDate: varchar("end_date", { length: 50 }),
