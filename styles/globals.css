@@ -47,3 +47,23 @@ a {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes insightsPulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
