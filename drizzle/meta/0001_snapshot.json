@@ -1,5 +1,5 @@
 {
-  "id": "29a9af67-b8ae-4e0b-8360-018844f9c131",
+  "id": "3ebe03fa-2e35-4459-ade0-45cc37997681",
   "prevId": "a8728fc0-21d1-4dc2-aa51-95d14802236b",
   "version": "7",
   "dialect": "postgresql",
@@ -218,26 +218,68 @@
           "primaryKey": false,
           "notNull": true
         },
-        "from_location": {
-          "name": "from_location",
-          "type": "varchar(255)",
+        "destinations": {
+          "name": "destinations",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "to_location": {
-          "name": "to_location",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "days": {
-          "name": "days",
+        "start_date": {
+          "name": "start_date",
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
-        "stops": {
-          "name": "stops",
+        "end_date": {
+          "name": "end_date",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "travellers": {
+          "name": "travellers",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pace": {
+          "name": "pace",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "budget": {
+          "name": "budget",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interests": {
+          "name": "interests",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "must_sees": {
+          "name": "must_sees",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avoid": {
+          "name": "avoid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobility_constraints": {
+          "name": "mobility_constraints",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "travel_modes": {
+          "name": "travel_modes",
           "type": "text",
           "primaryKey": false,
           "notNull": false

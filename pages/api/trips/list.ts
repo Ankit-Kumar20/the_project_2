@@ -23,10 +23,13 @@ export default async function handler(
       .select({
         id: trips.id,
         name: trips.name,
-        fromLocation: trips.fromLocation,
-        toLocation: trips.toLocation,
-        days: trips.days,
-        stops: trips.stops,
+        destinations: trips.destinations,
+        startDate: trips.startDate,
+        endDate: trips.endDate,
+        travellers: trips.travellers,
+        pace: trips.pace,
+        budget: trips.budget,
+        interests: trips.interests,
         createdAt: trips.createdAt,
       })
       .from(trips)

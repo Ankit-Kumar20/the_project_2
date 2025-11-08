@@ -110,40 +110,83 @@ export default async function handler(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { from, to, days, stops, name } = req.body;
+    const { 
+      name, 
+      destinations, 
+      startDate, 
+      endDate, 
+      travellers, 
+      pace, 
+      budget, 
+      interests, 
+      mustSees, 
+      avoid, 
+      mobilityConstraints, 
+      travelModes 
+    } = req.body;
 
-    if (!from || !to) {
-      return res.status(400).json({ error: 'From and To locations are required' });
+    if (!destinations) {
+      return res.status(400).json({ error: 'Destinations are required' });
+    }
+
+    // Calculate days between dates if provided
+    let days = 7;
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
     }
 
     console.log('🔍 Gathering real-time travel information using Exa...');
-    const travelInfo = await gatherTravelInformation(from, to, stops);
+    const travelInfo = await gatherTravelInformation(destinations, destinations, mustSees);
     
-    const prompt = `You are an AI travel planner. The user wants to go on a ${days || 7}-day trip from ${from} to ${to}${stops ? ` with stops in ${stops}` : ''}.
+    const prompt = `You are an AI travel planner. Create a personalized ${days}-day trip itinerary with the following details:
+
+DESTINATIONS: ${destinations}
+${startDate ? `START DATE: ${startDate}` : ''}
+${endDate ? `END DATE: ${endDate}` : ''}
+${travellers ? `TRAVELLERS: ${travellers}` : ''}
+PACE: ${pace || 'balanced'} (pace of travel - relaxed, balanced, or packed)
+${budget ? `BUDGET: ${budget}` : ''}
+${interests ? `INTERESTS: ${interests}` : ''}
+${mustSees ? `MUST-SEE PLACES: ${mustSees}` : ''}
+${avoid ? `THINGS TO AVOID: ${avoid}` : ''}
+${mobilityConstraints ? `MOBILITY CONSTRAINTS: ${mobilityConstraints}` : ''}
+${travelModes ? `PREFERRED TRAVEL MODES: ${travelModes}` : ''}
 
 ${travelInfo}
 
-Using the above real-time information from web search, generate a detailed travel flow with the following requirements:
-1. Create nodes for each day of the journey (minimum ${days || 7} nodes)
-2. Include intermediate stops, attractions, and activities (aim for 15-25 total nodes)
+Using the above information, generate a detailed travel flow with the following requirements:
+
+1. Create nodes for each day of the journey (${days} days total)
+2. Adjust the number of activities per day based on pace:
+   - Relaxed: 2-3 activities per day with longer durations
+   - Balanced: 3-4 activities per day
+   - Packed: 5-6 activities per day with efficient scheduling
 3. Each node should contain:
    - label: Name of the location/activity
    - info: Brief description
-   - day: Which day of the trip (1-${days || 7})
-   - activities: Array of 3-5 specific activities to do at this location
-   - accommodation: Suggested place to stay (hotel/resort/guesthouse)
-   - transportation: How to reach this location from previous node
-   - estimatedCost: Approximate cost in local currency
-   - duration: How long to spend here
-   - tips: Array of 2-3 helpful travel tips
-   - googleMapsLink: Generate a Google Maps URL in the format "https://www.google.com/maps/search/?api=1&query=PLACE_NAME" (replace PLACE_NAME with URL-encoded location name)
-   - coordinates: Approximate latitude and longitude of the location
+   - day: Which day of the trip (1-${days})
+   - activities: Array of specific activities matching the user's interests
+   - accommodation: Suggested places to stay within budget
+   - transportation: Use preferred travel modes when possible
+   - estimatedCost: Costs aligned with the specified budget
+   - duration: Appropriate duration based on pace
+   - tips: Helpful tips, especially regarding accessibility if mobility constraints mentioned
+   - googleMapsLink: Google Maps URL format "https://www.google.com/maps/search/?api=1&query=PLACE_NAME"
+   - coordinates: Approximate latitude and longitude
 
-4. Node types should vary: 'city', 'attraction', 'activity', 'restaurant', 'accommodation'
-5. Position nodes vertically with x coordinates varying slightly for visual appeal
-6. Create a comprehensive day-by-day itinerary with morning, afternoon, and evening activities
-7. IMPORTANT: Use the real-time information provided above to suggest actual attractions, activities, and places mentioned in the search results
-8. IMPORTANT: For each location, generate accurate Google Maps links and approximate coordinates
+4. IMPORTANT considerations:
+   - Focus activities around specified interests (${interests || 'general tourism'})
+   - Include all must-see places: ${mustSees || 'none specified'}
+   - Avoid: ${avoid || 'nothing specified'}
+   - Consider mobility constraints: ${mobilityConstraints || 'none'}
+   - Prioritize travel modes: ${travelModes || 'any'}
+   - Keep within budget: ${budget || 'not specified'}
+
+5. Node types should vary: 'city', 'attraction', 'activity', 'restaurant', 'accommodation'
+6. Position nodes vertically with x coordinates varying for visual appeal
+7. Use real-time information from web search for accurate, current recommendations
 
 Generate the complete travel flow in JSON format.`;
 
@@ -166,14 +209,21 @@ Generate the complete travel flow in JSON format.`;
     };
 
     // Store in database
-    const tripName = name || `${from} to ${to}`;
+    const tripName = name || `Trip to ${destinations}`;
     const [newTrip] = await db.insert(trips).values({
       userId: session.user.id,
       name: tripName,
-      fromLocation: from,
-      toLocation: to,
-      days: days?.toString() || '7',
-      stops: stops || null,
+      destinations,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      travellers: travellers || null,
+      pace: pace || 'balanced',
+      budget: budget || null,
+      interests: interests || null,
+      mustSees: mustSees || null,
+      avoid: avoid || null,
+      mobilityConstraints: mobilityConstraints || null,
+      travelModes: travelModes || null,
       tripData: JSON.stringify(processedFlow),
     }).returning();
 

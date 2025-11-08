@@ -9,21 +9,31 @@ import styles from "../styles/Home.module.css";
 interface Trip {
   id: string;
   name: string;
-  fromLocation: string;
-  toLocation: string;
-  days: string;
-  stops: string | null;
+  destinations: string;
+  startDate: string | null;
+  endDate: string | null;
+  travellers: string | null;
+  pace: string | null;
+  budget: string | null;
+  interests: string | null;
   createdAt: string;
 }
 
 const Home: NextPage = () => {
   const { data: session, isPending } = useSession();
   const router = useRouter();
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [days, setDays] = useState("");
-  const [stops, setStops] = useState("");
   const [name, setName] = useState("");
+  const [destinations, setDestinations] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [travellers, setTravellers] = useState("");
+  const [pace, setPace] = useState("balanced");
+  const [budget, setBudget] = useState("");
+  const [interests, setInterests] = useState("");
+  const [mustSees, setMustSees] = useState("");
+  const [avoid, setAvoid] = useState("");
+  const [mobilityConstraints, setMobilityConstraints] = useState("");
+  const [travelModes, setTravelModes] = useState("");
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -60,18 +70,38 @@ const Home: NextPage = () => {
       const response = await fetch("/api/trips/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to, days: Number(days), stops, name }),
+        body: JSON.stringify({ 
+          name,
+          destinations,
+          startDate,
+          endDate,
+          travellers,
+          pace,
+          budget,
+          interests,
+          mustSees,
+          avoid,
+          mobilityConstraints,
+          travelModes
+        }),
       });
 
       const result = await response.json();
       
       if (result.success) {
         setShowModal(false);
-        setFrom("");
-        setTo("");
-        setDays("");
-        setStops("");
         setName("");
+        setDestinations("");
+        setStartDate("");
+        setEndDate("");
+        setTravellers("");
+        setPace("balanced");
+        setBudget("");
+        setInterests("");
+        setMustSees("");
+        setAvoid("");
+        setMobilityConstraints("");
+        setTravelModes("");
         fetchTrips();
         router.push(`/canvas?tripId=${result.tripId}`);
       } else {
@@ -225,16 +255,49 @@ const Home: NextPage = () => {
                       </button>
                       <h3 style={{ margin: "0 0 10px 0", color: "#333", paddingRight: "80px" }}>{trip.name}</h3>
                       <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
-                        <strong>Route:</strong> {trip.fromLocation} → {trip.toLocation}
+                        <strong>Destinations:</strong> {trip.destinations}
                       </p>
-                      <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
-                        <strong>Duration:</strong> {trip.days} days
-                      </p>
-                      {trip.stops && (
+                      {trip.startDate && trip.endDate && (
                         <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
-                          <strong>Stops:</strong> {trip.stops}
+                          <strong>Dates:</strong> {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
                         </p>
                       )}
+                      {trip.travellers && (
+                        <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
+                          <strong>Travellers:</strong> {trip.travellers}
+                        </p>
+                      )}
+                      {trip.interests && (
+                        <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
+                          <strong>Interests:</strong> {trip.interests}
+                        </p>
+                      )}
+                      <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                        {trip.pace && (
+                          <span style={{ 
+                            padding: "3px 8px", 
+                            fontSize: "11px", 
+                            backgroundColor: "#e8f4f8", 
+                            color: "#0066cc",
+                            borderRadius: "3px",
+                            fontWeight: "500"
+                          }}>
+                            {trip.pace}
+                          </span>
+                        )}
+                        {trip.budget && (
+                          <span style={{ 
+                            padding: "3px 8px", 
+                            fontSize: "11px", 
+                            backgroundColor: "#f0f8e8", 
+                            color: "#2d7a2d",
+                            borderRadius: "3px",
+                            fontWeight: "500"
+                          }}>
+                            {trip.budget}
+                          </span>
+                        )}
+                      </div>
                       <p style={{ margin: "10px 0 0 0", color: "#999", fontSize: "12px" }}>
                         Created: {new Date(trip.createdAt).toLocaleDateString()}
                       </p>
@@ -265,36 +328,24 @@ const Home: NextPage = () => {
                     backgroundColor: "white",
                     padding: "30px",
                     borderRadius: "10px",
-                    maxWidth: "500px",
+                    maxWidth: "600px",
                     width: "90%",
+                    maxHeight: "85vh",
+                    overflowY: "auto",
                     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <h2 style={{ marginTop: 0, marginBottom: "20px", color: "#333" }}>
-                  Plan Your Trip
+                    Plan Your Trip
                   </h2>
-                  <div style={{ marginBottom: "15px" }}>
-                  <input
-                  type="text"
-                  placeholder="Trip Name (optional)"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  style={{
-                  width: "100%",
-                  padding: "10px",
-                  fontSize: "14px",
-                  borderRadius: "5px",
-                  border: "1px solid #ccc",
-                  }}
-                  />
-                  </div>
+
                   <div style={{ marginBottom: "15px" }}>
                     <input
                       type="text"
-                      placeholder="From (e.g., Delhi)"
-                      value={from}
-                      onChange={(e) => setFrom(e.target.value)}
+                      placeholder="Trip Name (optional)"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "10px",
@@ -304,12 +355,13 @@ const Home: NextPage = () => {
                       }}
                     />
                   </div>
+
                   <div style={{ marginBottom: "15px" }}>
                     <input
                       type="text"
-                      placeholder="To (e.g., Goa)"
-                      value={to}
-                      onChange={(e) => setTo(e.target.value)}
+                      placeholder="Destination(s) (e.g., Paris, Rome, Barcelona)"
+                      value={destinations}
+                      onChange={(e) => setDestinations(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "10px",
@@ -319,12 +371,50 @@ const Home: NextPage = () => {
                       }}
                     />
                   </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "15px" }}>
+                    <div>
+                      <label style={{ display: "block", marginBottom: "5px", fontSize: "12px", color: "#666" }}>
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          fontSize: "14px",
+                          borderRadius: "5px",
+                          border: "1px solid #ccc",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", marginBottom: "5px", fontSize: "12px", color: "#666" }}>
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          fontSize: "14px",
+                          borderRadius: "5px",
+                          border: "1px solid #ccc",
+                        }}
+                      />
+                    </div>
+                  </div>
+
                   <div style={{ marginBottom: "15px" }}>
                     <input
-                      type="number"
-                      placeholder="Days (e.g., 7)"
-                      value={days}
-                      onChange={(e) => setDays(e.target.value)}
+                      type="text"
+                      placeholder="Number of Travellers (e.g., 2 adults, 1 child)"
+                      value={travellers}
+                      onChange={(e) => setTravellers(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "10px",
@@ -334,12 +424,115 @@ const Home: NextPage = () => {
                       }}
                     />
                   </div>
+
+                  <div style={{ marginBottom: "15px" }}>
+                    <label style={{ display: "block", marginBottom: "5px", fontSize: "12px", color: "#666" }}>
+                      Travel Pace
+                    </label>
+                    <select
+                      value={pace}
+                      onChange={(e) => setPace(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                        backgroundColor: "white",
+                      }}
+                    >
+                      <option value="relaxed">Relaxed</option>
+                      <option value="balanced">Balanced</option>
+                      <option value="packed">Packed</option>
+                    </select>
+                  </div>
+
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      type="text"
+                      placeholder="Budget (e.g., $3000, moderate)"
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      type="text"
+                      placeholder="Interests (e.g., food, art, history, adventure)"
+                      value={interests}
+                      onChange={(e) => setInterests(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      type="text"
+                      placeholder="Must-See Places (optional)"
+                      value={mustSees}
+                      onChange={(e) => setMustSees(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      type="text"
+                      placeholder="Things to Avoid (optional)"
+                      value={avoid}
+                      onChange={(e) => setAvoid(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      type="text"
+                      placeholder="Mobility Constraints (optional)"
+                      value={mobilityConstraints}
+                      onChange={(e) => setMobilityConstraints(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+
                   <div style={{ marginBottom: "20px" }}>
                     <input
                       type="text"
-                      placeholder="Stops (optional, e.g., Mumbai, Pune)"
-                      value={stops}
-                      onChange={(e) => setStops(e.target.value)}
+                      placeholder="Travel Mode Preferences (e.g., train, car, walking)"
+                      value={travelModes}
+                      onChange={(e) => setTravelModes(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "10px",
@@ -366,15 +559,15 @@ const Home: NextPage = () => {
                     </button>
                     <button
                       onClick={handleCreateTrip}
-                      disabled={loading || !from || !to}
+                      disabled={loading || !destinations}
                       style={{
                         padding: "10px 20px",
                         fontSize: "16px",
-                        backgroundColor: loading || !from || !to ? "#ccc" : "#0070f3",
+                        backgroundColor: loading || !destinations ? "#ccc" : "#0070f3",
                         color: "white",
                         border: "none",
                         borderRadius: "5px",
-                        cursor: loading || !from || !to ? "not-allowed" : "pointer",
+                        cursor: loading || !destinations ? "not-allowed" : "pointer",
                       }}
                     >
                       {loading ? "Generating..." : "Generate Trip"}
