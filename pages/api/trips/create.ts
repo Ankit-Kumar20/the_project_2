@@ -310,7 +310,18 @@ Using the above information, generate a detailed travel flow with the following 
    - Keep within budget: ${budget || 'not specified'}
 
 5. Node types should vary: 'city', 'attraction', 'activity', 'restaurant', 'accommodation'
-6. Position nodes vertically with x coordinates varying for visual appeal
+6. Position nodes in a staircase pattern with GENEROUS spacing:
+   - VERTICAL spacing between nodes: 300-400 pixels minimum (increase y by 300-400 for each node)
+   - HORIZONTAL spacing: Alternate nodes left and right in a staircase pattern (x values: 100, 600, 100, 600, etc.)
+   - Start position: { x: 100, y: 0 }
+   - Example positions for first 5 nodes:
+     * Node 1 (Day 1): { x: 100, y: 0 }
+     * Node 2 (Day 1): { x: 600, y: 350 }
+     * Node 3 (Day 2): { x: 100, y: 700 }
+     * Node 4 (Day 2): { x: 600, y: 1050 }
+     * Node 5 (Day 3): { x: 100, y: 1400 }
+   - Continue this staircase pattern for all nodes with 350px vertical spacing
+   - Ensure NO nodes overlap - maintain at least 300px vertical distance between any two nodes
 7. Use real-time information from web search for accurate, current recommendations
 8. **CRITICAL: Node ID MUST EQUAL the day number** (day 1 = id "1", day 2 = id "2", etc.)
 
