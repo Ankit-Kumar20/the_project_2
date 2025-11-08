@@ -19,6 +19,12 @@ export interface PlaceDetails {
   openingHours?: {
     weekdayText?: string[];
   };
+  geometry?: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
 }
 
 export async function searchPlace(query: string): Promise<string | null> {
@@ -66,6 +72,7 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
       'photos',
       'formatted_address',
       'opening_hours',
+      'geometry',
     ].join(',');
 
     const response = await fetch(
@@ -93,6 +100,7 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
         })),
         formattedAddress: result.formatted_address,
         openingHours: result.opening_hours,
+        geometry: result.geometry,
       };
     }
 
@@ -116,4 +124,36 @@ export async function getLocationInsights(locationName: string): Promise<PlaceDe
   }
 
   return await getPlaceDetails(placeId);
+}
+
+export async function geocodeLocation(locationName: string): Promise<{ lat: number; lng: number } | null> {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  
+  if (!apiKey) {
+    console.error('GOOGLE_MAPS_API_KEY is not set');
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        locationName
+      )}&key=${apiKey}`
+    );
+
+    const data = await response.json();
+
+    if (data.status === 'OK' && data.results?.length > 0) {
+      const location = data.results[0].geometry.location;
+      return {
+        lat: location.lat,
+        lng: location.lng,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error geocoding location:', error);
+    return null;
+  }
 }

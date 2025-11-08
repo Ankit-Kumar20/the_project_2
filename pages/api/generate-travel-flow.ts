@@ -288,7 +288,18 @@ Using the above real-time information from web search, generate a detailed trave
    
 6. Use REAL locations from the web search results above - mention actual place names, not generic activities
 
-7. Position nodes vertically by day, with x varying for visual layout
+7. Position nodes in a staircase pattern with GENEROUS spacing:
+   - VERTICAL spacing between nodes: 300-400 pixels minimum (increase y by 300-400 for each node)
+   - HORIZONTAL spacing: Alternate nodes left and right in a staircase pattern (x values: 100, 600, 100, 600, etc.)
+   - Start position: { x: 100, y: 0 }
+   - Example positions for first 5 nodes:
+     * Node 1 (Day 1): { x: 100, y: 0 }
+     * Node 2 (Day 1): { x: 600, y: 350 }
+     * Node 3 (Day 2): { x: 100, y: 700 }
+     * Node 4 (Day 2): { x: 600, y: 1050 }
+     * Node 5 (Day 3): { x: 100, y: 1400 }
+   - Continue this staircase pattern for all nodes with 350px vertical spacing
+   - Ensure NO nodes overlap - maintain at least 300px vertical distance between any two nodes
 
 8. **CRITICAL: Node ID MUST EQUAL the day number** (day 1 = id "1", day 2 = id "2", etc.)
  
