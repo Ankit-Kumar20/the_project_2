@@ -22,6 +22,7 @@ import "reactflow/dist/style.css";
 import ChatWidget from "@/components/ChatWidget";
 import TripDetailsCard from "@/components/TripDetailsCard";
 import { useTheme } from "@/lib/theme-context";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
   MapPin,
   Plus,
@@ -87,8 +88,7 @@ const CustomEdge = ({
               fontWeight: "500",
               textAlign: "center",
               border: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`,
-              fontFamily:
-                "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily: '"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
             }}
           >
             {data.distance}
@@ -127,7 +127,7 @@ const CustomNode = ({
       style={{
         background: isDark ? "#1a1a1a" : "#ffffff",
         color: isDark ? "#ffffff" : "#000000",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontFamily: '"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
       <Handle type="target" position={Position.Top} />
@@ -389,7 +389,7 @@ const CustomControls = ({
           }
         }}
       >
-        <FilePdf size={20} weight="bold" />
+        <FilePdf size={20} weight="regular" />
       </button>
       <button
         onClick={toggleTheme}
@@ -418,9 +418,9 @@ const CustomControls = ({
         }}
       >
         {theme === "dark" ? (
-          <Sun size={20} weight="bold" />
+          <Sun size={20} weight="regular" />
         ) : (
-          <Moon size={20} weight="bold" />
+          <Moon size={20} weight="regular" />
         )}
       </button>
       <button
@@ -449,7 +449,7 @@ const CustomControls = ({
           }
         }}
       >
-        <Plus size={20} weight="bold" />
+        <Plus size={20} weight="regular" />
       </button>
       <button
         onClick={() => zoomOut()}
@@ -477,7 +477,7 @@ const CustomControls = ({
           }
         }}
       >
-        <Minus size={20} weight="bold" />
+        <Minus size={20} weight="regular" />
       </button>
       <button
         onClick={() => fitView({ padding: 0.3, maxZoom: 0.9 })}
@@ -505,7 +505,7 @@ const CustomControls = ({
           }
         }}
       >
-        <CornersOut size={20} weight="bold" />
+        <CornersOut size={20} weight="regular" />
       </button>
     </div>
   );
@@ -788,13 +788,12 @@ export default function Canvas() {
         className="flex flex-col justify-center items-center h-screen gap-4"
         style={{ background: theme === "dark" ? "#0a0a0a" : "#fafafa" }}
       >
-        <div
-          className="animate-spin rounded-full h-12 w-12 border-b-2"
-          style={{ borderColor: theme === "dark" ? "#fff" : "#000" }}
-        ></div>
-        <p style={{ color: theme === "dark" ? "#fff" : "#000" }}>
-          Loading trip...
-        </p>
+        <LoadingSpinner 
+          size={48} 
+          showText 
+          text="Loading trip..." 
+          color={theme === "dark" ? "#fff" : "#000"}
+        />
       </div>
     );
   }
@@ -887,6 +886,7 @@ export default function Canvas() {
           color={theme === "dark" ? "#404040" : "#bfbfbf"}
           gap={16}
           size={2}
+          style={{ transform: "rotate(180deg)" }}
         />
         <CustomControls nodes={nodes} tripDetails={tripDetails} />
       </ReactFlow>

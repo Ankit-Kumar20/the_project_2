@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme-context";
 import { Moon, Sun, Plus, MapPin, Calendar, Users, Trash } from "@phosphor-icons/react";
 import NewTripModal from "@/components/NewTripModal";
+import { ContrastIcon } from "@/components/ContrastIcon";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface Trip {
   id: string;
@@ -42,6 +44,7 @@ const Dashboard: NextPage = () => {
   const [mobilityConstraints, setMobilityConstraints] = useState("");
   const [travelModes, setTravelModes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -64,9 +67,15 @@ const Dashboard: NextPage = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/home");
+  const handleSignOut = () => {
+    setIsSigningOut(true);
+    signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+        },
+      },
+    });
   };
 
   const handleCreateTrip = async () => {
@@ -174,7 +183,7 @@ const Dashboard: NextPage = () => {
       style={{
         minHeight: "100vh",
         background: theme === "dark" ? "#101011" : "#fafafa",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontFamily: '"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
       <Head>
@@ -205,7 +214,7 @@ const Dashboard: NextPage = () => {
             style={{
               margin: 0,
               fontSize: "24px",
-              fontWeight: 600,
+              fontWeight: 400,
               color: theme === "dark" ? "#fff" : "#000",
             }}
           >
@@ -229,26 +238,33 @@ const Dashboard: NextPage = () => {
                 e.currentTarget.style.color = theme === "dark" ? "#fff" : "#000";
               }}
             >
-              {theme === "dark" ? <Sun size={20} weight="bold" /> : <Moon size={20} weight="bold" />}
+              {theme === "dark" ? <Sun size={20} weight="regular" /> : <Moon size={20} weight="regular" />}
             </button>
             
             <button
               onClick={handleSignOut}
+              disabled={isSigningOut}
               className={buttonClass}
               style={{
-                background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
-                color: theme === "dark" ? "#fff" : "#000",
+                background: isSigningOut ? "#ef4444" : theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                color: isSigningOut ? "#fff" : theme === "dark" ? "#fff" : "#000",
+                cursor: isSigningOut ? "not-allowed" : "pointer",
+                opacity: isSigningOut ? 0.8 : 1,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#ef4444";
-                e.currentTarget.style.color = "#fff";
+                if (!isSigningOut) {
+                  e.currentTarget.style.background = "#ef4444";
+                  e.currentTarget.style.color = "#fff";
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = theme === "dark" ? "#1a1a1a" : "#f3f4f6";
-                e.currentTarget.style.color = theme === "dark" ? "#fff" : "#000";
+                if (!isSigningOut) {
+                  e.currentTarget.style.background = theme === "dark" ? "#1a1a1a" : "#f3f4f6";
+                  e.currentTarget.style.color = theme === "dark" ? "#fff" : "#000";
+                }
               }}
             >
-              Sign Out
+              {isSigningOut ? "Signing Out..." : "Sign Out"}
             </button>
           </div>
         </div>
@@ -265,13 +281,12 @@ const Dashboard: NextPage = () => {
         {/* Trips Grid */}
         {loadingTrips ? (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <div 
-              className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" 
-              style={{ borderColor: theme === "dark" ? "#fff" : "#000" }}
-            ></div>
-            <p style={{ color: theme === "dark" ? "#a0a0a0" : "#666", fontSize: "14px" }}>
-              Loading trips...
-            </p>
+            <LoadingSpinner 
+              size={48} 
+              showText 
+              text="Loading trips..." 
+              color={theme === "dark" ? "#a0a0a0" : "#666"}
+            />
           </div>
         ) : (
           <div
@@ -371,7 +386,7 @@ const Dashboard: NextPage = () => {
                     margin: "0 0 4px",
                     paddingRight: "50px",
                     fontSize: "24px",
-                    fontWeight: 600,
+                    fontWeight: 400,
                     color: theme === "dark" ? "#fff" : "#000",
                     lineHeight: "1.3",
                   }}

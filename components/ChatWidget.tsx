@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Trash, PaperPlaneTilt, ChatCircle, Sparkle, ArrowCounterClockwise, ArrowClockwise } from "@phosphor-icons/react";
 import { useTheme } from "@/lib/theme-context";
 import { Node, Edge } from "reactflow";
+import { ContrastIcon } from "./ContrastIcon";
 
 interface ChatWidgetProps {
     nodes: Node[];
@@ -129,7 +130,7 @@ export default function ChatWidget({ nodes, edges, onGraphUpdate, onUndo, onRedo
                     }}
                     title="Open chat"
                 >
-                    <Sparkle size={20} weight="bold" />
+                    <Sparkle size={20} weight="regular" />
                 </button>
             )}
 
@@ -238,10 +239,8 @@ export default function ChatWidget({ nodes, edges, onGraphUpdate, onUndo, onRedo
                                         ? "bg-[#2a2a2a] text-white border-[#333] shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
                                         : "bg-[#f5f5f5] text-black border-[#e5e5e5] shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
                                 }`}>
-                                    <div className="flex gap-1">
-                                        <span className="animate-bounce">●</span>
-                                        <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>●</span>
-                                        <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>●</span>
+                                    <div className="animate-spin">
+                                        <ContrastIcon size={20} />
                                     </div>
                                 </div>
                             </div>
