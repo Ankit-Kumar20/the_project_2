@@ -150,7 +150,9 @@ Using the above real-time information from web search, generate a detailed trave
 
 7. Position nodes vertically by day, with x varying for visual layout
 
-Generate the complete travel flow in JSON format.`;
+8. **CRITICAL: Node ID MUST EQUAL the day number** (day 1 = id "1", day 2 = id "2", etc.)
+ 
+ Generate the complete travel flow in JSON format.`;
 
     try {
       console.log('🤖 Generating travel flow with LLM...');
@@ -162,11 +164,12 @@ Generate the complete travel flow in JSON format.`;
 
       console.log('✅ Travel flow generated successfully');
       
-      // Ensure all nodes have type: 'custom' to display Google Maps links
+      // Ensure all nodes have type: 'custom' and sync id with day
       const processedFlow = {
         ...result.object.flow,
         nodes: result.object.flow.nodes.map(node => ({
           ...node,
+          id: node.data.day ? String(node.data.day) : node.id,
           type: 'custom'
         }))
       };

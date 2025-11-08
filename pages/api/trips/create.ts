@@ -187,8 +187,9 @@ Using the above information, generate a detailed travel flow with the following 
 5. Node types should vary: 'city', 'attraction', 'activity', 'restaurant', 'accommodation'
 6. Position nodes vertically with x coordinates varying for visual appeal
 7. Use real-time information from web search for accurate, current recommendations
+8. **CRITICAL: Node ID MUST EQUAL the day number** (day 1 = id "1", day 2 = id "2", etc.)
 
-Generate the complete travel flow in JSON format.`;
+ Generate the complete travel flow in JSON format.`;
 
     console.log('🤖 Generating travel flow with LLM...');
     const result = await generateObject({
@@ -199,11 +200,12 @@ Generate the complete travel flow in JSON format.`;
 
     console.log('✅ Travel flow generated successfully');
     
-    // Ensure all nodes have type: 'custom' to display Google Maps links
+    // Ensure all nodes have type: 'custom' and sync id with day
     const processedFlow = {
       ...result.object.flow,
       nodes: result.object.flow.nodes.map(node => ({
         ...node,
+        id: node.data.day ? String(node.data.day) : node.id,
         type: 'custom'
       }))
     };
