@@ -5,6 +5,8 @@ import { useRouter } from "next/router";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useState, useEffect } from "react";
 import styles from "../styles/Home.module.css";
+import { useTheme } from "@/lib/theme-context";
+import { Moon, Sun } from "@phosphor-icons/react";
 
 interface Trip {
   id: string;
@@ -17,10 +19,15 @@ interface Trip {
   budget: string | null;
   interests: string | null;
   createdAt: string;
+  fromLocation?: string;
+  toLocation?: string;
+  days?: number;
+  stops?: string;
 }
 
 const Home: NextPage = () => {
   const { data: session, isPending } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [name, setName] = useState("");
   const [destinations, setDestinations] = useState("");
@@ -70,7 +77,7 @@ const Home: NextPage = () => {
       const response = await fetch("/api/trips/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           name,
           destinations,
           startDate,
@@ -82,12 +89,12 @@ const Home: NextPage = () => {
           mustSees,
           avoid,
           mobilityConstraints,
-          travelModes
+          travelModes,
         }),
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         setShowModal(false);
         setName("");
@@ -119,9 +126,13 @@ const Home: NextPage = () => {
     router.push(`/canvas?tripId=${tripId}`);
   };
 
-  const handleDeleteTrip = async (tripId: string, tripName: string, e: React.MouseEvent) => {
+  const handleDeleteTrip = async (
+    tripId: string,
+    tripName: string,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
-    
+
     if (!confirm(`Are you sure you want to delete "${tripName}"?`)) {
       return;
     }
@@ -134,7 +145,7 @@ const Home: NextPage = () => {
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         fetchTrips();
       } else {
@@ -155,6 +166,23 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
+        <div className="absolute top-[20px] right-[20px]">
+          <button
+            onClick={toggleTheme}
+            className="p-[10px] rounded-[24px] border-[1.5px] cursor-pointer flex items-center justify-center transition-all duration-200"
+            style={{
+              backgroundColor: "var(--hover-bg)",
+              borderColor: "var(--border-color)",
+            }}
+            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+          >
+            {theme === "light" ? (
+              <Moon size={20} weight="regular" color="var(--text-primary)" />
+            ) : (
+              <Sun size={20} weight="regular" color="var(--text-primary)" />
+            )}
+          </button>
+        </div>
         <h1 className={styles.title}>Welcome to Next.js on Replit!</h1>
 
         {isPending ? (
@@ -162,143 +190,108 @@ const Home: NextPage = () => {
         ) : session?.user ? (
           <div>
             <p className={styles.description}>
-              Welcome, {String(session.user.name || session.user.email || "User")}!
+              Welcome,{" "}
+              {String(session.user.name || session.user.email || "User")}!
             </p>
-            <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
+            <div className="mt-[20px] flex gap-[10px] justify-center">
               <button
                 onClick={() => setShowModal(true)}
-                style={{
-                  padding: "12px 30px",
-                  fontSize: "16px",
-                  backgroundColor: "#0070f3",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                }}
+                className="px-[30px] py-[12px] text-[16px] bg-[#0070f3] text-white border-none rounded-[24px] cursor-pointer font-semibold"
               >
                 New Trip
               </button>
               <button
                 onClick={handleSignOut}
-                style={{
-                  padding: "10px 20px",
-                  fontSize: "16px",
-                  backgroundColor: "#ff0000",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
+                className="px-[20px] py-[10px] text-[16px] bg-[#ff0000] text-white border-none rounded-[24px] cursor-pointer"
               >
                 Sign Out
               </button>
             </div>
 
             {/* Trips List */}
-            <div style={{ marginTop: "40px", maxWidth: "800px", margin: "40px auto" }}>
-              <h2 style={{ marginBottom: "20px", color: "#333" }}>Your Trips</h2>
+            <div className="mt-[40px] max-w-[800px] mx-auto my-[40px]">
+              <h2
+                className="mb-[20px]"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Your Trips
+              </h2>
               {loadingTrips ? (
                 <p>Loading trips...</p>
               ) : trips.length === 0 ? (
-                <p style={{ color: "#666" }}>No trips yet. Create your first trip!</p>
+                <p style={{ color: "var(--text-secondary)" }}>
+                  No trips yet. Create your first trip!
+                </p>
               ) : (
-                <div style={{ display: "grid", gap: "15px" }}>
+                <div className="grid gap-[15px]">
                   {trips.map((trip) => (
                     <div
                       key={trip.id}
                       onClick={() => handleViewTrip(trip.id)}
+                      className="p-[20px] rounded-[24px] border-[1.5px] cursor-pointer transition-all duration-200 relative"
                       style={{
-                        padding: "20px",
-                        backgroundColor: "#fff",
-                        border: "1px solid #ddd",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-                        position: "relative",
+                        backgroundColor: "var(--bg-primary)",
+                        borderColor: "var(--border-color)",
+                        boxShadow:
+                          theme === "light"
+                            ? "0 2px 4px rgba(0,0,0,0.05)"
+                            : "0 2px 4px rgba(0,0,0,0.3)",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                        e.currentTarget.style.boxShadow =
+                          theme === "light"
+                            ? "0 4px 12px rgba(0,0,0,0.1)"
+                            : "0 4px 12px rgba(0,0,0,0.5)";
                         e.currentTarget.style.borderColor = "#0070f3";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-                        e.currentTarget.style.borderColor = "#ddd";
+                        e.currentTarget.style.boxShadow =
+                          theme === "light"
+                            ? "0 2px 4px rgba(0,0,0,0.05)"
+                            : "0 2px 4px rgba(0,0,0,0.3)";
+                        const borderColor = getComputedStyle(
+                          document.documentElement
+                        ).getPropertyValue("--border-color");
+                        e.currentTarget.style.borderColor = borderColor;
                       }}
                     >
                       <button
                         onClick={(e) => handleDeleteTrip(trip.id, trip.name, e)}
-                        style={{
-                          position: "absolute",
-                          top: "15px",
-                          right: "15px",
-                          padding: "6px 12px",
-                          fontSize: "12px",
-                          backgroundColor: "#ff4444",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          fontWeight: "500",
-                          transition: "background-color 0.2s",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#cc0000";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "#ff4444";
-                        }}
+                        className="absolute top-[15px] right-[15px] px-[12px] py-[6px] text-[12px] bg-[#ff4444] text-white border-none rounded-[24px] cursor-pointer font-medium transition-colors duration-200 hover:bg-[#cc0000]"
                       >
                         Delete
                       </button>
-                      <h3 style={{ margin: "0 0 10px 0", color: "#333", paddingRight: "80px" }}>{trip.name}</h3>
-                      <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
-                        <strong>Destinations:</strong> {trip.destinations}
+                      <h3
+                        className="m-0 mb-[10px] pr-[80px]"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {trip.name}
+                      </h3>
+                      <p
+                        className="my-[5px] mx-0 text-[14px]"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        <strong>Route:</strong> {trip.fromLocation} →{" "}
+                        {trip.toLocation}
                       </p>
-                      {trip.startDate && trip.endDate && (
-                        <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
-                          <strong>Dates:</strong> {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
+                      <p
+                        className="my-[5px] mx-0 text-[14px]"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        <strong>Duration:</strong> {trip.days} days
+                      </p>
+                      {trip.stops && (
+                        <p
+                          className="my-[5px] mx-0 text-[14px]"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
+                          <strong>Stops:</strong> {trip.stops}
                         </p>
                       )}
-                      {trip.travellers && (
-                        <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
-                          <strong>Travellers:</strong> {trip.travellers}
-                        </p>
-                      )}
-                      {trip.interests && (
-                        <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
-                          <strong>Interests:</strong> {trip.interests}
-                        </p>
-                      )}
-                      <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                        {trip.pace && (
-                          <span style={{ 
-                            padding: "3px 8px", 
-                            fontSize: "11px", 
-                            backgroundColor: "#e8f4f8", 
-                            color: "#0066cc",
-                            borderRadius: "3px",
-                            fontWeight: "500"
-                          }}>
-                            {trip.pace}
-                          </span>
-                        )}
-                        {trip.budget && (
-                          <span style={{ 
-                            padding: "3px 8px", 
-                            fontSize: "11px", 
-                            backgroundColor: "#f0f8e8", 
-                            color: "#2d7a2d",
-                            borderRadius: "3px",
-                            fontWeight: "500"
-                          }}>
-                            {trip.budget}
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ margin: "10px 0 0 0", color: "#999", fontSize: "12px" }}>
+                      <p
+                        className="mt-[10px] mx-0 mb-0 text-[12px] opacity-70"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
                         Created: {new Date(trip.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -309,137 +302,106 @@ const Home: NextPage = () => {
 
             {showModal && (
               <div
-                style={{
-                  position: "fixed",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: "rgba(0, 0, 0, 0.5)",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  zIndex: 1000,
-                }}
+                className="fixed top-0 left-0 right-0 bottom-0 bg-black/70 flex justify-center items-center z-[1000]"
                 onClick={() => setShowModal(false)}
               >
                 <div
+                  className="p-[30px] rounded-[24px] max-w-[600px] w-[90%] border-[1.5px]"
                   style={{
-                    backgroundColor: "white",
-                    padding: "30px",
-                    borderRadius: "10px",
-                    maxWidth: "600px",
-                    width: "90%",
-                    maxHeight: "85vh",
-                    overflowY: "auto",
-                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+                    backgroundColor: "var(--bg-primary)",
+                    borderColor: "var(--border-color)",
+                    boxShadow:
+                      theme === "light"
+                        ? "0 4px 20px rgba(0, 0, 0, 0.2)"
+                        : "0 4px 20px rgba(0, 0, 0, 0.6)",
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <h2 style={{ marginTop: 0, marginBottom: "20px", color: "#333" }}>
+                  <h2
+                    className="mt-0 mb-[20px]"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     Plan Your Trip
                   </h2>
 
-                  <div style={{ marginBottom: "15px" }}>
+                  <div className="mb-[15px]">
                     <input
                       type="text"
                       placeholder="Trip Name (optional)"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
+                        borderColor: "var(--border-color)",
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
                       }}
                     />
                   </div>
 
-                  <div style={{ marginBottom: "15px" }}>
+                  <div className="mb-[15px]">
                     <input
                       type="text"
                       placeholder="Destination(s) (e.g., Paris, Rome, Barcelona)"
                       value={destinations}
                       onChange={(e) => setDestinations(e.target.value)}
+                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
+                        borderColor: "var(--border-color)",
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
                       }}
                     />
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "15px" }}>
+                  <div className="grid grid-cols-2 gap-[10px] mb-[15px]">
                     <div>
-                      <label style={{ display: "block", marginBottom: "5px", fontSize: "12px", color: "#666" }}>
+                      <label className="block mb-[5px] text-[12px] text-[#666]">
                         Start Date
                       </label>
                       <input
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          fontSize: "14px",
-                          borderRadius: "5px",
-                          border: "1px solid #ccc",
-                        }}
+                        className="w-full p-[10px] text-[14px] rounded-[5px] border border-[#ccc]"
                       />
                     </div>
                     <div>
-                      <label style={{ display: "block", marginBottom: "5px", fontSize: "12px", color: "#666" }}>
+                      <label className="block mb-[5px] text-[12px] text-[#666]">
                         End Date
                       </label>
                       <input
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          fontSize: "14px",
-                          borderRadius: "5px",
-                          border: "1px solid #ccc",
-                        }}
+                        className="w-full p-[10px] text-[14px] rounded-[5px] border border-[#ccc]"
                       />
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: "15px" }}>
+                  <div className="mb-[15px]">
                     <input
                       type="text"
                       placeholder="Number of Travellers (e.g., 2 adults, 1 child)"
                       value={travellers}
                       onChange={(e) => setTravellers(e.target.value)}
+                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
+                        borderColor: "var(--border-color)",
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
                       }}
                     />
                   </div>
 
-                  <div style={{ marginBottom: "15px" }}>
-                    <label style={{ display: "block", marginBottom: "5px", fontSize: "12px", color: "#666" }}>
+                  <div className="mb-[15px]">
+                    <label className="block mb-[5px] text-[12px] text-[#666]">
                       Travel Pace
                     </label>
                     <select
                       value={pace}
                       onChange={(e) => setPace(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
-                        backgroundColor: "white",
-                      }}
+                      className="w-full p-[10px] text-[14px] rounded-[5px] border border-[#ccc] bg-white"
                     >
                       <option value="relaxed">Relaxed</option>
                       <option value="balanced">Balanced</option>
@@ -447,127 +409,106 @@ const Home: NextPage = () => {
                     </select>
                   </div>
 
-                  <div style={{ marginBottom: "15px" }}>
+                  <div className="mb-[15px]">
                     <input
                       type="text"
                       placeholder="Budget (e.g., $3000, moderate)"
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
+                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
+                        borderColor: "var(--border-color)",
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
                       }}
                     />
                   </div>
 
-                  <div style={{ marginBottom: "15px" }}>
+                  <div className="mb-[15px]">
                     <input
                       type="text"
                       placeholder="Interests (e.g., food, art, history, adventure)"
                       value={interests}
                       onChange={(e) => setInterests(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
-                      }}
+                      className="w-full p-[10px] text-[14px] rounded-[5px] border border-[#ccc]"
                     />
                   </div>
 
-                  <div style={{ marginBottom: "15px" }}>
+                  <div className="mb-[15px]">
                     <input
                       type="text"
                       placeholder="Must-See Places (optional)"
                       value={mustSees}
                       onChange={(e) => setMustSees(e.target.value)}
+                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
+                        borderColor: "var(--border-color)",
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
                       }}
                     />
                   </div>
 
-                  <div style={{ marginBottom: "15px" }}>
+                  <div className="mb-[15px]">
                     <input
                       type="text"
                       placeholder="Things to Avoid (optional)"
                       value={avoid}
                       onChange={(e) => setAvoid(e.target.value)}
+                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
+                        borderColor: "var(--border-color)",
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
                       }}
                     />
                   </div>
 
-                  <div style={{ marginBottom: "15px" }}>
+                  <div className="mb-[15px]">
                     <input
                       type="text"
                       placeholder="Mobility Constraints (optional)"
                       value={mobilityConstraints}
                       onChange={(e) => setMobilityConstraints(e.target.value)}
+                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
+                        borderColor: "var(--border-color)",
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
                       }}
                     />
                   </div>
 
-                  <div style={{ marginBottom: "20px" }}>
+                  <div className="mb-[20px]">
                     <input
                       type="text"
                       placeholder="Travel Mode Preferences (e.g., train, car, walking)"
                       value={travelModes}
                       onChange={(e) => setTravelModes(e.target.value)}
+                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        fontSize: "14px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
+                        borderColor: "var(--border-color)",
+                        backgroundColor: "var(--bg-primary)",
+                        color: "var(--text-primary)",
                       }}
                     />
                   </div>
-                  <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                  <div className="flex gap-[10px] justify-end">
                     <button
                       onClick={() => setShowModal(false)}
-                      style={{
-                        padding: "10px 20px",
-                        fontSize: "16px",
-                        backgroundColor: "#ccc",
-                        color: "#333",
-                        border: "none",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                      }}
+                      className="px-[20px] py-[10px] text-[16px] bg-[#ccc] text-[#333] border-none rounded-[24px] cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleCreateTrip}
                       disabled={loading || !destinations}
+                      className="px-[20px] py-[10px] text-[16px] text-white border-none rounded-[24px]"
                       style={{
-                        padding: "10px 20px",
-                        fontSize: "16px",
-                        backgroundColor: loading || !destinations ? "#ccc" : "#0070f3",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "5px",
-                        cursor: loading || !destinations ? "not-allowed" : "pointer",
+                        backgroundColor:
+                          loading || !destinations ? "#ccc" : "#0070f3",
+                        cursor:
+                          loading || !destinations ? "not-allowed" : "pointer",
                       }}
                     >
                       {loading ? "Generating..." : "Generate Trip"}
