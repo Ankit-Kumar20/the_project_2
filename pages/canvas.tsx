@@ -21,6 +21,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import ChatWidget from "@/components/ChatWidget";
 import TripDetailsCard from "@/components/TripDetailsCard";
+import TripInsightsWidget from "@/components/TripInsightsWidget";
 import { useTheme } from "@/lib/theme-context";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
@@ -34,6 +35,7 @@ import {
   Moon,
   Sun,
   FilePdf,
+  Lightbulb,
 } from "@phosphor-icons/react";
 import { jsPDF } from "jspdf";
 
@@ -292,9 +294,13 @@ const initialEdges: Edge[] = [];
 const CustomControls = ({
   nodes,
   tripDetails,
+  onOpenInsights,
+  isLoadingInsights,
 }: {
   nodes: Node[];
   tripDetails: any;
+  onOpenInsights: () => void;
+  isLoadingInsights: boolean;
 }) => {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const { theme, toggleTheme } = useTheme();
@@ -601,6 +607,45 @@ const CustomControls = ({
       >
         <CornersOut size={20} weight="regular" />
       </button>
+      <button
+        onClick={onOpenInsights}
+        disabled={isLoadingInsights}
+        className={buttonClass}
+        style={{
+          background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+          color: theme === "dark" ? "#fff" : "#000",
+          opacity: isLoadingInsights ? 0.7 : 1,
+          cursor: isLoadingInsights ? 'wait' : 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          if (!isLoadingInsights) {
+            if (theme === "dark") {
+              e.currentTarget.style.background = "#fff";
+              e.currentTarget.style.color = "#000";
+            } else {
+              e.currentTarget.style.background = "#000";
+              e.currentTarget.style.color = "#fff";
+            }
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (theme === "dark") {
+            e.currentTarget.style.background = "#1a1a1a";
+            e.currentTarget.style.color = "#fff";
+          } else {
+            e.currentTarget.style.background = "#f3f4f6";
+            e.currentTarget.style.color = "#000";
+          }
+        }}
+      >
+        <Lightbulb 
+          size={20} 
+          weight="regular"
+          style={{
+            animation: isLoadingInsights ? 'insightsPulse 1.5s ease-in-out infinite' : 'none',
+          }}
+        />
+      </button>
     </div>
   );
 };
@@ -623,6 +668,8 @@ export default function Canvas() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isLoadingTrip, setIsLoadingTrip] = useState(true);
   const [loadingDistances, setLoadingDistances] = useState(false);
+  const insightsWidgetRef = useRef<{ open: () => void; isLoading: () => boolean } | null>(null);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
 
   // Calculate distance between two nodes
   const calculateDistance = useCallback(
@@ -982,9 +1029,30 @@ export default function Canvas() {
           size={2}
           style={{ transform: "rotate(180deg)" }}
         />
-        <CustomControls nodes={nodes} tripDetails={tripDetails} />
+        <CustomControls 
+          nodes={nodes} 
+          tripDetails={tripDetails} 
+          onOpenInsights={() => {
+            insightsWidgetRef.current?.open();
+            // Poll loading state
+            const checkLoading = setInterval(() => {
+              const loading = insightsWidgetRef.current?.isLoading() || false;
+              setIsLoadingInsights(loading);
+              if (!loading) clearInterval(checkLoading);
+            }, 100);
+          }}
+          isLoadingInsights={isLoadingInsights}
+        />
       </ReactFlow>
       {tripDetails && <TripDetailsCard tripData={tripDetails} />}
+      {tripDetails && nodes.length > 0 && (
+        <TripInsightsWidget 
+          ref={insightsWidgetRef}
+          tripDetails={tripDetails} 
+          nodes={nodes}
+          tripId={router.query.tripId as string}
+        />
+      )}
       <ChatWidget
         nodes={nodes}
         edges={edges}

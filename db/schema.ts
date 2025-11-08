@@ -86,8 +86,23 @@ export const trips = pgTable("trips", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Trip Insights table (cached insights)
+export const tripInsights = pgTable("trip_insights", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  tripId: text("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  insightsData: text("insights_data").notNull(), // JSON stringified insights
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 export type Trip = typeof trips.$inferSelect;
 export type NewTrip = typeof trips.$inferInsert;
+export type TripInsight = typeof tripInsights.$inferSelect;
+export type NewTripInsight = typeof tripInsights.$inferInsert;
 
