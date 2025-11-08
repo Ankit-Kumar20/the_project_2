@@ -19,7 +19,8 @@ import "reactflow/dist/style.css";
 import ChatWidget from "@/components/ChatWidget";
 import TripDetailsCard from "@/components/TripDetailsCard";
 import { useTheme } from "@/lib/theme-context";
-import { MapPin, Plus, Minus, CornersOut, CloudCheck, CloudSlash, ClockClockwise } from "@phosphor-icons/react";
+import { MapPin, Plus, Minus, CornersOut, CloudCheck, CloudSlash, ClockClockwise, Moon, Sun, FilePdf } from "@phosphor-icons/react";
+import { jsPDF } from "jspdf";
 
 // Custom node component - Simple black and white wireframe style
 const CustomNode = ({
@@ -30,6 +31,7 @@ const CustomNode = ({
         googleMapsLink?: string;
         info?: string;
         day?: number;
+        theme?: string;
     };
 }) => {
     // Debug: Log node data to console
@@ -39,7 +41,7 @@ const CustomNode = ({
         googleMapsLink: data.googleMapsLink,
     });
 
-    const isDark = document.documentElement.classList.contains("dark");
+    const isDark = data.theme === "dark";
 
     return (
         <div
@@ -76,14 +78,12 @@ const CustomNode = ({
                         background: isDark ? "#1a1a1a" : "#fff",
                     }}
                     onMouseEnter={(e) => {
-                        const dark = document.documentElement.classList.contains("dark");
-                        e.currentTarget.style.background = dark ? "#fff" : "#000";
-                        e.currentTarget.style.color = dark ? "#000" : "#fff";
+                        e.currentTarget.style.background = isDark ? "#fff" : "#000";
+                        e.currentTarget.style.color = isDark ? "#000" : "#fff";
                     }}
                     onMouseLeave={(e) => {
-                        const dark = document.documentElement.classList.contains("dark");
-                        e.currentTarget.style.background = dark ? "#1a1a1a" : "#fff";
-                        e.currentTarget.style.color = dark ? "#fff" : "#000";
+                        e.currentTarget.style.background = isDark ? "#1a1a1a" : "#fff";
+                        e.currentTarget.style.color = isDark ? "#fff" : "#000";
                     }}
                     onClick={(e) => {
                         e.stopPropagation();
@@ -111,9 +111,150 @@ const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
 // Custom Controls Component
-const CustomControls = () => {
+const CustomControls = ({ nodes, tripDetails }: { nodes: Node[], tripDetails: any }) => {
     const { zoomIn, zoomOut, fitView } = useReactFlow();
-    const { theme } = useTheme();
+    const { theme, toggleTheme } = useTheme();
+    const [isExporting, setIsExporting] = useState(false);
+
+    const exportToPdf = async () => {
+        setIsExporting(true);
+        try {
+            const response = await fetch('/api/enhance-pdf-details', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tripDetails, nodes })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                const { tripOverview, enhancedLocations } = result.data;
+                
+                // Create PDF
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const margin = 15;
+                const maxWidth = pageWidth - (margin * 2);
+                let yPosition = margin;
+
+                // Helper function to add text with word wrap
+                const addText = (text: string, fontSize: number, isBold: boolean = false, isTitle: boolean = false) => {
+                    pdf.setFontSize(fontSize);
+                    pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+                    
+                    const lines = pdf.splitTextToSize(text, maxWidth);
+                    
+                    lines.forEach((line: string, index: number) => {
+                        if (yPosition + 10 > pageHeight - margin) {
+                            pdf.addPage();
+                            yPosition = margin;
+                        }
+                        
+                        if (isTitle && index === 0) {
+                            pdf.text(line, pageWidth / 2, yPosition, { align: 'center' });
+                        } else {
+                            pdf.text(line, margin, yPosition);
+                        }
+                        yPosition += fontSize * 0.5;
+                    });
+                };
+
+                // Helper function to add bullet points
+                const addBulletPoints = (points: string[], fontSize: number = 11) => {
+                    pdf.setFontSize(fontSize);
+                    pdf.setFont('helvetica', 'normal');
+                    
+                    points.forEach((point: string) => {
+                        // Remove existing bullet if present
+                        const cleanPoint = point.replace(/^[•\-\*]\s*/, '');
+                        const bulletWidth = 5;
+                        const textMaxWidth = maxWidth - bulletWidth;
+                        const lines = pdf.splitTextToSize(cleanPoint, textMaxWidth);
+                        
+                        lines.forEach((line: string, index: number) => {
+                            if (yPosition + 10 > pageHeight - margin) {
+                                pdf.addPage();
+                                yPosition = margin;
+                            }
+                            
+                            if (index === 0) {
+                                // Add bullet for first line
+                                pdf.text('•', margin, yPosition);
+                                pdf.text(line, margin + bulletWidth, yPosition);
+                            } else {
+                                // Indent continuation lines
+                                pdf.text(line, margin + bulletWidth, yPosition);
+                            }
+                            yPosition += fontSize * 0.45;
+                        });
+                        yPosition += 2; // Extra space after each bullet point
+                    });
+                };
+
+                // Title
+                addText(tripDetails?.name || 'Travel Itinerary', 22, true, true);
+                yPosition += 5;
+
+                // Trip Details
+                if (tripDetails?.destinations) {
+                    addText(`Destinations: ${tripDetails.destinations}`, 11, false);
+                    yPosition += 3;
+                }
+                if (tripDetails?.startDate && tripDetails?.endDate) {
+                    const startDate = new Date(tripDetails.startDate).toLocaleDateString();
+                    const endDate = new Date(tripDetails.endDate).toLocaleDateString();
+                    addText(`Dates: ${startDate} - ${endDate}`, 11, false);
+                    yPosition += 3;
+                }
+                if (tripDetails?.travellers) {
+                    addText(`Travellers: ${tripDetails.travellers}`, 11, false);
+                    yPosition += 3;
+                }
+                if (tripDetails?.budget) {
+                    addText(`Budget: ${tripDetails.budget}`, 11, false);
+                    yPosition += 3;
+                }
+                
+                yPosition += 10;
+
+                // Trip Overview
+                addText('Trip Overview', 16, true);
+                yPosition += 5;
+                if (Array.isArray(tripOverview)) {
+                    addBulletPoints(tripOverview);
+                } else {
+                    addText(tripOverview, 11, false);
+                }
+                yPosition += 10;
+
+                // Enhanced Locations
+                addText('Detailed Itinerary', 16, true);
+                yPosition += 8;
+
+                enhancedLocations.forEach((location: any) => {
+                    addText(`Day ${location.day}: ${location.location}`, 14, true);
+                    yPosition += 5;
+                    if (Array.isArray(location.points)) {
+                        addBulletPoints(location.points);
+                    } else if (location.enhancedInfo) {
+                        addText(location.enhancedInfo, 11, false);
+                    }
+                    yPosition += 8;
+                });
+
+                // Download PDF
+                const fileName = `${tripDetails?.name || 'Trip'}_Itinerary.pdf`;
+                pdf.save(fileName);
+            } else {
+                alert('Failed to enhance PDF details: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Failed to export PDF');
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     const buttonClass =
         "w-[44px] h-[44px] border-none rounded-full cursor-pointer font-light text-[18px] flex items-center justify-center transition-all duration-200";
@@ -121,10 +262,43 @@ const CustomControls = () => {
     return (
         <div className="absolute bottom-[20px] left-[20px] z-[1000] flex flex-col gap-[8px]">
             <button
-                onClick={() => zoomIn()}
+                onClick={exportToPdf}
+                disabled={isExporting}
                 className={buttonClass}
                 style={{
-                    background: theme === "dark" ? "#1a1a1a" : "#fff",
+                    background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                    color: theme === "dark" ? "#fff" : "#000",
+                    opacity: isExporting ? 0.5 : 1,
+                    cursor: isExporting ? 'wait' : 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                    if (!isExporting) {
+                        if (theme === "dark") {
+                            e.currentTarget.style.background = "#fff";
+                            e.currentTarget.style.color = "#000";
+                        } else {
+                            e.currentTarget.style.background = "#000";
+                            e.currentTarget.style.color = "#fff";
+                        }
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    if (theme === "dark") {
+                        e.currentTarget.style.background = "#1a1a1a";
+                        e.currentTarget.style.color = "#fff";
+                    } else {
+                        e.currentTarget.style.background = "#f3f4f6";
+                        e.currentTarget.style.color = "#000";
+                    }
+                }}
+            >
+                <FilePdf size={20} weight="bold" />
+            </button>
+            <button
+                onClick={toggleTheme}
+                className={buttonClass}
+                style={{
+                    background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
                     color: theme === "dark" ? "#fff" : "#000",
                 }}
                 onMouseEnter={(e) => {
@@ -141,7 +315,35 @@ const CustomControls = () => {
                         e.currentTarget.style.background = "#1a1a1a";
                         e.currentTarget.style.color = "#fff";
                     } else {
+                        e.currentTarget.style.background = "#f3f4f6";
+                        e.currentTarget.style.color = "#000";
+                    }
+                }}
+            >
+                {theme === "dark" ? <Sun size={20} weight="bold" /> : <Moon size={20} weight="bold" />}
+            </button>
+            <button
+                onClick={() => zoomIn()}
+                className={buttonClass}
+                style={{
+                    background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                    color: theme === "dark" ? "#fff" : "#000",
+                }}
+                onMouseEnter={(e) => {
+                    if (theme === "dark") {
                         e.currentTarget.style.background = "#fff";
+                        e.currentTarget.style.color = "#000";
+                    } else {
+                        e.currentTarget.style.background = "#000";
+                        e.currentTarget.style.color = "#fff";
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    if (theme === "dark") {
+                        e.currentTarget.style.background = "#1a1a1a";
+                        e.currentTarget.style.color = "#fff";
+                    } else {
+                        e.currentTarget.style.background = "#f3f4f6";
                         e.currentTarget.style.color = "#000";
                     }
                 }}
@@ -152,7 +354,7 @@ const CustomControls = () => {
                 onClick={() => zoomOut()}
                 className={buttonClass}
                 style={{
-                    background: theme === "dark" ? "#1a1a1a" : "#fff",
+                    background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
                     color: theme === "dark" ? "#fff" : "#000",
                 }}
                 onMouseEnter={(e) => {
@@ -169,7 +371,7 @@ const CustomControls = () => {
                         e.currentTarget.style.background = "#1a1a1a";
                         e.currentTarget.style.color = "#fff";
                     } else {
-                        e.currentTarget.style.background = "#fff";
+                        e.currentTarget.style.background = "#f3f4f6";
                         e.currentTarget.style.color = "#000";
                     }
                 }}
@@ -180,7 +382,7 @@ const CustomControls = () => {
                 onClick={() => fitView({ padding: 0.3, maxZoom: 0.9 })}
                 className={buttonClass}
                 style={{
-                    background: theme === "dark" ? "#1a1a1a" : "#fff",
+                    background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
                     color: theme === "dark" ? "#fff" : "#000",
                 }}
                 onMouseEnter={(e) => {
@@ -197,7 +399,7 @@ const CustomControls = () => {
                         e.currentTarget.style.background = "#1a1a1a";
                         e.currentTarget.style.color = "#fff";
                     } else {
-                        e.currentTarget.style.background = "#fff";
+                        e.currentTarget.style.background = "#f3f4f6";
                         e.currentTarget.style.color = "#000";
                     }
                 }}
@@ -240,8 +442,8 @@ export default function Canvas() {
                                 ...node,
                                 type: node.type || "custom",
                             }));
-                            // Remove per-edge styles to let defaultEdgeOptions apply
-                            const processedEdges = flowData.edges.map(({ style, ...edge }: any) => edge);
+                            // Remove per-edge styles and type to let defaultEdgeOptions apply
+                            const processedEdges = flowData.edges.map(({ style, type, ...edge }: any) => edge);
                             setNodes(processedNodes);
                             setEdges(processedEdges);
                             setShouldAutoFit(true);
@@ -279,8 +481,8 @@ export default function Canvas() {
                             ...node,
                             type: node.type || "custom",
                         }));
-                        // Remove per-edge styles to let defaultEdgeOptions apply
-                        const processedEdges = flowData.edges.map(({ style, ...edge }: any) => edge);
+                        // Remove per-edge styles and type to let defaultEdgeOptions apply
+                        const processedEdges = flowData.edges.map(({ style, type, ...edge }: any) => edge);
                         setNodes(processedNodes);
                         setEdges(processedEdges);
                         setShouldAutoFit(true);
@@ -297,6 +499,35 @@ export default function Canvas() {
 
         loadTripData();
     }, [router.query.tripId, router.query.flowData, setNodes, setEdges]);
+
+    // Update nodes and edges theme when theme changes
+    useEffect(() => {
+        setNodes((nds) =>
+            nds.map((node) => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    theme,
+                },
+            }))
+        );
+        setEdges((eds) =>
+            eds.map((edge) => ({
+                ...edge,
+                labelStyle: {
+                    fill: theme === "dark" ? "#fff" : "#000",
+                    fontSize: 12,
+                    fontWeight: 500,
+                },
+                labelBgStyle: {
+                    fill: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                    fillOpacity: 1,
+                },
+                labelBgPadding: [8, 12] as [number, number],
+                labelBgBorderRadius: 12,
+            }))
+        );
+    }, [theme, setNodes, setEdges]);
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -395,7 +626,7 @@ export default function Canvas() {
                 onClick={() => router.push("/")}
                 className="absolute top-[20px] left-[20px] z-[1000] w-[44px] h-[44px] border-none rounded-full cursor-pointer font-light text-[18px] flex items-center justify-center transition-all duration-200"
                 style={{
-                    background: theme === "dark" ? "#1a1a1a" : "#fff",
+                    background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
                     color: theme === "dark" ? "#fff" : "#000",
                 }}
                 onMouseEnter={(e) => {
@@ -412,7 +643,7 @@ export default function Canvas() {
                         e.currentTarget.style.background = "#1a1a1a";
                         e.currentTarget.style.color = "#fff";
                     } else {
-                        e.currentTarget.style.background = "#fff";
+                        e.currentTarget.style.background = "#f3f4f6";
                         e.currentTarget.style.color = "#000";
                     }
                 }}
@@ -423,7 +654,7 @@ export default function Canvas() {
                 <div
                     className="absolute top-[20px] left-1/2 transform -translate-x-1/2 z-[1000] py-[12px] px-[28px] font-normal text-[14px]"
                     style={{
-                        background: theme === "dark" ? "#1a1a1a" : "#fff",
+                        background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
                         color: theme === "dark" ? "#fff" : "#000",
                         borderRadius: "30px",
                     }}
@@ -451,7 +682,18 @@ export default function Canvas() {
                         stroke: theme === "dark" ? "#fff" : "#000",
                         strokeWidth: 1.5,
                     },
-                    type: "smoothstep",
+                    type: "default",
+                    labelStyle: {
+                        fill: theme === "dark" ? "#fff" : "#000",
+                        fontSize: 12,
+                        fontWeight: 500,
+                    },
+                    labelBgStyle: {
+                        fill: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
+                        fillOpacity: 1,
+                    },
+                    labelBgPadding: [8, 12] as [number, number],
+                    labelBgBorderRadius: 12,
                 }}
             >
                 <Background
@@ -459,7 +701,7 @@ export default function Canvas() {
                     gap={16}
                     size={2}
                 />
-                <CustomControls />
+                <CustomControls nodes={nodes} tripDetails={tripDetails} />
             </ReactFlow>
             {tripDetails && <TripDetailsCard tripData={tripDetails} />}
             <ChatWidget
