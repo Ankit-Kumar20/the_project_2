@@ -33,30 +33,32 @@ ${nodes.map((node: any, idx: number) => `Day ${node.data?.day || idx + 1}: ${nod
 Current Info: ${node.data?.info || 'No information provided'}`).join('\n\n')}
 
 TASK:
-1. Create an engaging trip overview (2-3 paragraphs) that summarizes the trip's essence, highlights, and what makes it special
-2. For each location/day, enhance the existing information with:
-   - Rich context about the location (history, culture, significance)
-   - Specific recommendations (best times to visit, insider tips)
-   - Practical details (estimated duration, what to bring, booking tips)
-   - Why this location fits with the traveler's interests and pace
-   - Transportation tips between locations
-   - Budget-appropriate suggestions
+1. Create a concise trip overview (3-5 bullet points) highlighting the trip's essence and what makes it special
+2. For each location/day, provide detailed BULLET POINTS covering:
+   - Location context (history, culture, significance) - 2-3 points
+   - Specific recommendations (best times to visit, insider tips) - 2-3 points
+   - Practical details (estimated duration, what to bring, booking tips) - 2-3 points
+   - Why this fits traveler's interests and pace - 1-2 points
+   - Transportation tips - 1-2 points
+   - Budget-appropriate suggestions - 1-2 points
+
+FORMAT: Use bullet points (each starting with "• ") for ALL content. Make points detailed but concise.
 
 CRITICAL: You must respond with ONLY valid JSON, no markdown formatting, no code blocks, no additional text.
 
 Return ONLY this JSON structure:
 {
-  "tripOverview": "Detailed engaging overview here",
+  "tripOverview": ["• First overview point", "• Second overview point", "• Third overview point"],
   "enhancedLocations": [
     {
       "day": 1,
       "location": "Location name",
-      "enhancedInfo": "Rich detailed information here"
+      "points": ["• First detailed point", "• Second detailed point", "• Third detailed point"]
     }
   ]
 }
 
-Make the descriptions vivid, practical, and personalized based on the traveler's preferences. Each location should have at least 3-4 detailed paragraphs.`;
+Make each bullet point informative, practical, and personalized. Aim for 8-12 detailed bullet points per location.`;
 
     const { text } = await generateText({
       model: openai('gpt-4o'),
