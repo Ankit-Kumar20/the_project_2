@@ -45,7 +45,7 @@ const TripDetailsCard: React.FC<TripDetailsCardProps> = ({ tripData }) => {
     <div
       className="absolute top-[20px] right-[20px] z-[1000] cursor-pointer"
       style={{
-        background: theme === "dark" ? "#1a1a1a" : "#fff",
+        background: theme === "dark" ? "#1a1a1a" : "#f3f4f6",
         maxHeight: isExpanded ? "800px" : "60px",
         overflow: "hidden",
         borderRadius: "30px",

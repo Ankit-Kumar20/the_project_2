@@ -107,58 +107,8 @@ const nodeTypes: NodeTypes = {
     output: CustomNode,
 };
 
-const initialNodes: Node[] = [
-    {
-        id: "1",
-        type: "custom",
-        data: {
-            label: "Delhi",
-            day: 1,
-            googleMapsLink:
-                "https://www.google.com/maps/search/?api=1&query=Delhi+India",
-        },
-        position: { x: 250, y: 100 },
-    },
-    {
-        id: "2",
-        type: "custom",
-        data: {
-            label: "Taj Mahal, Agra",
-            day: 2,
-            googleMapsLink:
-                "https://www.google.com/maps/search/?api=1&query=Taj+Mahal+Agra",
-        },
-        position: { x: 250, y: 250 },
-    },
-    {
-        id: "3",
-        type: "custom",
-        data: {
-            label: "Jaipur City Palace",
-            day: 3,
-            googleMapsLink:
-                "https://www.google.com/maps/search/?api=1&query=City+Palace+Jaipur",
-        },
-        position: { x: 250, y: 400 },
-    },
-];
-
-const initialEdges: Edge[] = [
-    {
-        id: "e1-2",
-        source: "1",
-        target: "2",
-        animated: false,
-        label: "4h drive",
-    },
-    {
-        id: "e2-3",
-        source: "2",
-        target: "3",
-        animated: false,
-        label: "5h drive",
-    },
-];
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
 
 // Custom Controls Component
 const CustomControls = () => {
@@ -272,6 +222,7 @@ export default function Canvas() {
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [isLoadingTrip, setIsLoadingTrip] = useState(true);
 
     // Load flow data from trip ID or query params
     useEffect(() => {
@@ -315,6 +266,8 @@ export default function Canvas() {
                     }
                 } catch (error) {
                     console.error("Error loading trip data:", error);
+                } finally {
+                    setIsLoadingTrip(false);
                 }
             }
             // Fallback to flowData query param (legacy support)
@@ -334,7 +287,11 @@ export default function Canvas() {
                     }
                 } catch (error) {
                     console.error("Error parsing flow data:", error);
+                } finally {
+                    setIsLoadingTrip(false);
                 }
+            } else {
+                setIsLoadingTrip(false);
             }
         };
 
@@ -412,10 +369,14 @@ export default function Canvas() {
     );
 
     // Show loading state
-    if (isPending) {
+    if (isPending || isLoadingTrip) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <p>Loading...</p>
+            <div 
+                className="flex flex-col justify-center items-center h-screen gap-4"
+                style={{ background: theme === "dark" ? "#0a0a0a" : "#fafafa" }}
+            >
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: theme === "dark" ? "#fff" : "#000" }}></div>
+                <p style={{ color: theme === "dark" ? "#fff" : "#000" }}>Loading trip...</p>
             </div>
         );
     }
