@@ -106,7 +106,7 @@ export default function ChatWidget({ nodes, edges, onGraphUpdate, onUndo, onRedo
                     onClick={() => setIsOpen(true)}
                     className="fixed bottom-5 right-5 z-[102] w-[44px] h-[44px] border-none rounded-full cursor-pointer font-light text-[18px] flex items-center justify-center transition-all duration-200"
                     style={{
-                        background: isDark ? "#1a1a1a" : "#fff",
+                        background: isDark ? "#1a1a1a" : "#f3f4f6",
                         color: isDark ? "#fff" : "#000",
                     }}
                     onMouseEnter={(e) => {
@@ -123,7 +123,7 @@ export default function ChatWidget({ nodes, edges, onGraphUpdate, onUndo, onRedo
                             e.currentTarget.style.background = "#1a1a1a";
                             e.currentTarget.style.color = "#fff";
                         } else {
-                            e.currentTarget.style.background = "#fff";
+                            e.currentTarget.style.background = "#f3f4f6";
                             e.currentTarget.style.color = "#000";
                         }
                     }}
@@ -137,12 +137,12 @@ export default function ChatWidget({ nodes, edges, onGraphUpdate, onUndo, onRedo
                 <div className={`fixed bottom-4 right-4 z-[102] w-[400px] h-[500px] rounded-[24px] overflow-hidden flex flex-col border-[1.5px] ${
                     isDark 
                         ? "bg-[#1a1a1a] text-white border-[#2a2a2a] shadow-[0_4px_6px_rgba(0,0,0,0.5)]" 
-                        : "bg-white text-black border-[#e5e5e5] shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
+                        : "bg-[#f3f4f6] text-black border-[#e5e5e5] shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
                 }`}>
                     <div className={`flex items-center justify-between px-4 py-3 border-b ${
                         isDark 
                             ? "bg-[rgba(26,26,26,0.95)] border-[#2a2a2a]" 
-                            : "bg-[rgba(255,255,255,0.95)] border-[#e5e5e5]"
+                            : "bg-[rgba(243,244,246,0.95)] border-[#e5e5e5]"
                     }`}>
                         <div className="flex items-center gap-3">
                             <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
@@ -253,7 +253,7 @@ export default function ChatWidget({ nodes, edges, onGraphUpdate, onUndo, onRedo
                         className={`p-4 border-t ${
                             isDark 
                                 ? "bg-[rgba(26,26,26,0.95)] border-[#2a2a2a]" 
-                                : "bg-[rgba(255,255,255,0.95)] border-[#e5e5e5]"
+                                : "bg-[rgba(243,244,246,0.95)] border-[#e5e5e5]"
                         }`}
                     >
                         <div className="flex gap-3">

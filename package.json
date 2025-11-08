@@ -24,6 +24,8 @@
     "drizzle-kit": "^0.31.6",
     "drizzle-orm": "^0.44.7",
     "exa-js": "^1.0.17",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
     "next": "^15.2.3",
     "postcss": "^8.5.6",
     "postgres": "^3.4.7",

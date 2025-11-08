@@ -7,6 +7,7 @@ import styles from "../styles/Home.module.css";
 import { useTheme } from "@/lib/theme-context";
 import { Moon, Sun } from "@phosphor-icons/react";
 import AuthModal from "@/components/AuthModal";
+import NewTripModal from "@/components/NewTripModal";
 
 interface Trip {
   id: string;
@@ -332,221 +333,36 @@ const Home: NextPage = () => {
             </div>
 
             {showModal && (
-              <div
-                className="fixed top-0 left-0 right-0 bottom-0 bg-black/70 flex justify-center items-center z-[1000]"
-                onClick={() => setShowModal(false)}
-              >
-                <div
-                  className="p-[30px] rounded-[24px] max-w-[600px] w-[90%] border-[1.5px]"
-                  style={{
-                    backgroundColor: "var(--bg-primary)",
-                    borderColor: "var(--border-color)",
-                    boxShadow:
-                      theme === "light"
-                        ? "0 4px 20px rgba(0, 0, 0, 0.2)"
-                        : "0 4px 20px rgba(0, 0, 0, 0.6)",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h2
-                    className="mt-0 mb-[20px]"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    Plan Your Trip
-                  </h2>
-
-                  <div className="mb-[15px]">
-                    <input
-                      type="text"
-                      placeholder="Trip Name (optional)"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
-                      style={{
-                        borderColor: "var(--border-color)",
-                        backgroundColor: "var(--bg-primary)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-[15px]">
-                    <input
-                      type="text"
-                      placeholder="Destination(s) (e.g., Paris, Rome, Barcelona)"
-                      value={destinations}
-                      onChange={(e) => setDestinations(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
-                      style={{
-                        borderColor: "var(--border-color)",
-                        backgroundColor: "var(--bg-primary)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-[10px] mb-[15px]">
-                    <div>
-                      <label className="block mb-[5px] text-[12px] text-[#666]">
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full p-[10px] text-[14px] rounded-[5px] border border-[#ccc]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block mb-[5px] text-[12px] text-[#666]">
-                        End Date
-                      </label>
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full p-[10px] text-[14px] rounded-[5px] border border-[#ccc]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mb-[15px]">
-                    <input
-                      type="text"
-                      placeholder="Number of Travellers (e.g., 2 adults, 1 child)"
-                      value={travellers}
-                      onChange={(e) => setTravellers(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
-                      style={{
-                        borderColor: "var(--border-color)",
-                        backgroundColor: "var(--bg-primary)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-[15px]">
-                    <label className="block mb-[5px] text-[12px] text-[#666]">
-                      Travel Pace
-                    </label>
-                    <select
-                      value={pace}
-                      onChange={(e) => setPace(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[5px] border border-[#ccc] bg-white"
-                    >
-                      <option value="relaxed">Relaxed</option>
-                      <option value="balanced">Balanced</option>
-                      <option value="packed">Packed</option>
-                    </select>
-                  </div>
-
-                  <div className="mb-[15px]">
-                    <input
-                      type="text"
-                      placeholder="Budget (e.g., $3000, moderate)"
-                      value={budget}
-                      onChange={(e) => setBudget(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
-                      style={{
-                        borderColor: "var(--border-color)",
-                        backgroundColor: "var(--bg-primary)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-[15px]">
-                    <input
-                      type="text"
-                      placeholder="Interests (e.g., food, art, history, adventure)"
-                      value={interests}
-                      onChange={(e) => setInterests(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[5px] border border-[#ccc]"
-                    />
-                  </div>
-
-                  <div className="mb-[15px]">
-                    <input
-                      type="text"
-                      placeholder="Must-See Places (optional)"
-                      value={mustSees}
-                      onChange={(e) => setMustSees(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
-                      style={{
-                        borderColor: "var(--border-color)",
-                        backgroundColor: "var(--bg-primary)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-[15px]">
-                    <input
-                      type="text"
-                      placeholder="Things to Avoid (optional)"
-                      value={avoid}
-                      onChange={(e) => setAvoid(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
-                      style={{
-                        borderColor: "var(--border-color)",
-                        backgroundColor: "var(--bg-primary)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-[15px]">
-                    <input
-                      type="text"
-                      placeholder="Mobility Constraints (optional)"
-                      value={mobilityConstraints}
-                      onChange={(e) => setMobilityConstraints(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
-                      style={{
-                        borderColor: "var(--border-color)",
-                        backgroundColor: "var(--bg-primary)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-[20px]">
-                    <input
-                      type="text"
-                      placeholder="Travel Mode Preferences (e.g., train, car, walking)"
-                      value={travelModes}
-                      onChange={(e) => setTravelModes(e.target.value)}
-                      className="w-full p-[10px] text-[14px] rounded-[24px] border-[1.5px]"
-                      style={{
-                        borderColor: "var(--border-color)",
-                        backgroundColor: "var(--bg-primary)",
-                        color: "var(--text-primary)",
-                      }}
-                    />
-                  </div>
-                  <div className="flex gap-[10px] justify-end">
-                    <button
-                      onClick={() => setShowModal(false)}
-                      className="px-[20px] py-[10px] text-[16px] bg-[#ccc] text-[#333] border-none rounded-[24px] cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleCreateTrip}
-                      disabled={loading || !destinations}
-                      className="px-[20px] py-[10px] text-[16px] text-white border-none rounded-[24px]"
-                      style={{
-                        backgroundColor:
-                          loading || !destinations ? "#ccc" : "#0070f3",
-                        cursor:
-                          loading || !destinations ? "not-allowed" : "pointer",
-                      }}
-                    >
-                      {loading ? "Generating..." : "Generate Trip"}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <NewTripModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                name={name}
+                setName={setName}
+                destinations={destinations}
+                setDestinations={setDestinations}
+                startDate={startDate}
+                setStartDate={setStartDate}
+                endDate={endDate}
+                setEndDate={setEndDate}
+                travellers={travellers}
+                setTravellers={setTravellers}
+                pace={pace}
+                setPace={setPace}
+                budget={budget}
+                setBudget={setBudget}
+                interests={interests}
+                setInterests={setInterests}
+                mustSees={mustSees}
+                setMustSees={setMustSees}
+                avoid={avoid}
+                setAvoid={setAvoid}
+                mobilityConstraints={mobilityConstraints}
+                setMobilityConstraints={setMobilityConstraints}
+                travelModes={travelModes}
+                setTravelModes={setTravelModes}
+                loading={loading}
+                onSubmit={handleCreateTrip}
+              />
             )}
           </div>
         ) : null}
