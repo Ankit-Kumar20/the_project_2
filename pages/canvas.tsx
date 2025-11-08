@@ -38,6 +38,8 @@ import {
   Lightbulb,
   CurrencyDollar,
   ForkKnife,
+  ListChecks,
+  X,
 } from "@phosphor-icons/react";
 import { jsPDF } from "jspdf";
 
@@ -106,6 +108,7 @@ const CustomEdge = ({
 // Custom node component - Simple black and white wireframe style
 const CustomNode = ({
   data,
+  id,
 }: {
   data: {
     label: string;
@@ -127,16 +130,88 @@ const CustomNode = ({
       cuisine?: string;
       priceRange?: string;
     }>;
+    todos?: Array<{
+      id: string;
+      text: string;
+      completed: boolean;
+    }>;
   };
+  id: string;
 }) => {
   const { theme } = useTheme();
   const [showRestaurants, setShowRestaurants] = useState(false);
   const [showCostBreakdown, setShowCostBreakdown] = useState(false);
+  const [showTodos, setShowTodos] = useState(false);
+  const [newTodoText, setNewTodoText] = useState("");
   const restaurantTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { setNodes } = useReactFlow();
   
   const isDark = theme === "dark";
   const hasRestaurants = data.restaurants && data.restaurants.length > 0;
   const hasCostInfo = data.costBreakdown || data.estimatedCost;
+  const todos = data.todos || [];
+
+  const addTodo = () => {
+    if (!newTodoText.trim()) return;
+    
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                todos: [
+                  ...(node.data.todos || []),
+                  {
+                    id: Date.now().toString(),
+                    text: newTodoText.trim(),
+                    completed: false,
+                  },
+                ],
+              },
+            }
+          : node
+      )
+    );
+    setNewTodoText("");
+  };
+
+  const toggleTodo = (todoId: string) => {
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                todos: (node.data.todos || []).map((todo: any) =>
+                  todo.id === todoId
+                    ? { ...todo, completed: !todo.completed }
+                    : todo
+                ),
+              },
+            }
+          : node
+      )
+    );
+  };
+
+  const deleteTodo = (todoId: string) => {
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                todos: (node.data.todos || []).filter((todo: any) => todo.id !== todoId),
+              },
+            }
+          : node
+      )
+    );
+  };
 
   return (
     <div
@@ -245,6 +320,33 @@ const CustomNode = ({
             Food
           </button>
         )}
+        
+        <button
+          className="inline-flex items-center gap-[4px] text-[11px] border-none py-[4px] px-[10px] rounded-[24px] transition-all duration-200 font-medium cursor-pointer"
+          style={{
+            color: showTodos ? (isDark ? "#000" : "#fff") : (isDark ? "#fff" : "#000"),
+            background: showTodos ? (isDark ? "#fff" : "#000") : (isDark ? "#1a1a1a" : "#fff"),
+          }}
+          onMouseEnter={(e) => {
+            if (!showTodos) {
+              e.currentTarget.style.background = isDark ? "#fff" : "#000";
+              e.currentTarget.style.color = isDark ? "#000" : "#fff";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!showTodos) {
+              e.currentTarget.style.background = isDark ? "#1a1a1a" : "#fff";
+              e.currentTarget.style.color = isDark ? "#fff" : "#000";
+            }
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowTodos(!showTodos);
+          }}
+        >
+          <ListChecks size={14} weight="fill" />
+          Todos {todos.length > 0 && `(${todos.filter(t => !t.completed).length})`}
+        </button>
       </div>
 
       {/* Cost Breakdown Popup */}
@@ -388,6 +490,99 @@ const CustomNode = ({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Todos Popup */}
+      {showTodos && (
+        <div
+          className="absolute bottom-[calc(100%+10px)] left-1/2 transform -translate-x-1/2 min-w-[280px] max-w-[320px] rounded-[16px] p-[16px] shadow-lg z-[1000]"
+          style={{
+            background: isDark ? "#2a2a2a" : "#ffffff",
+            color: isDark ? "#fff" : "#000",
+            border: `1px solid ${isDark ? "#404040" : "#e0e0e0"}`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="text-[12px] font-semibold mb-[10px]"
+            style={{ color: isDark ? "#fff" : "#000" }}
+          >
+            Todos for {data.label}
+          </div>
+          
+          {/* Add Todo Input */}
+          <div className="flex gap-[6px] mb-[10px]">
+            <input
+              type="text"
+              value={newTodoText}
+              onChange={(e) => setNewTodoText(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  addTodo();
+                }
+              }}
+              placeholder="Add a todo..."
+              className="flex-1 px-[8px] py-[6px] text-[11px] rounded-[8px] border-none outline-none"
+              style={{
+                background: isDark ? "#1a1a1a" : "#f5f5f5",
+                color: isDark ? "#fff" : "#000",
+              }}
+            />
+            <button
+              onClick={addTodo}
+              className="px-[10px] py-[6px] text-[11px] rounded-[8px] border-none cursor-pointer font-medium"
+              style={{
+                background: isDark ? "#fff" : "#000",
+                color: isDark ? "#000" : "#fff",
+              }}
+            >
+              Add
+            </button>
+          </div>
+
+          {/* Todos List */}
+          <div className="space-y-[6px] max-h-[240px] overflow-y-auto">
+            {todos.length === 0 ? (
+              <div className="text-[11px] text-center py-[10px]" style={{ color: isDark ? "#a0a0a0" : "#666" }}>
+                No todos yet. Add one above!
+              </div>
+            ) : (
+              todos.map((todo) => (
+                <div
+                  key={todo.id}
+                  className="flex items-center gap-[8px] p-[6px] rounded-[8px]"
+                  style={{
+                    background: isDark ? "#1a1a1a" : "#f5f5f5",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={todo.completed}
+                    onChange={() => toggleTodo(todo.id)}
+                    className="cursor-pointer"
+                  />
+                  <span
+                    className="flex-1 text-[11px]"
+                    style={{
+                      color: isDark ? "#fff" : "#000",
+                      textDecoration: todo.completed ? "line-through" : "none",
+                      opacity: todo.completed ? 0.6 : 1,
+                    }}
+                  >
+                    {todo.text}
+                  </span>
+                  <button
+                    onClick={() => deleteTodo(todo.id)}
+                    className="p-[2px] border-none bg-transparent cursor-pointer"
+                    style={{ color: isDark ? "#888" : "#666" }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -1037,6 +1232,13 @@ export default function Canvas() {
     },
     [saveTripData]
   );
+
+  // Watch for node changes (including todos) and auto-save
+  useEffect(() => {
+    if (nodes.length > 0 && edges.length >= 0 && !isLoadingTrip) {
+      debouncedSave(nodes, edges);
+    }
+  }, [nodes, edges, isLoadingTrip]);
 
   // Handle new connections
   const onConnect = useCallback(
