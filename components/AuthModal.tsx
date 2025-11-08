@@ -1,6 +1,7 @@
 import { signIn } from "@/lib/auth-client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/router";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -17,12 +18,16 @@ export default function AuthModal({
 }: AuthModalProps) {
   const [closeHover, setCloseHover] = useState(false);
   const [googleHover, setGoogleHover] = useState(false);
+  const router = useRouter();
 
   if (!isOpen) return null;
 
   const handleGoogle = async () => {
     try {
-      await signIn.social({ provider: "google" });
+      await signIn.social({ 
+        provider: "google",
+        callbackURL: "/dashboard"
+      });
     } catch (err) {
       console.error(err);
     }
