@@ -194,7 +194,7 @@ const TripInsightsWidget = forwardRef<TripInsightsWidgetRef, TripInsightsWidgetP
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto flex-1 px-[20px] py-[16px]">
+          <div className="overflow-y-auto flex-1 px-[20px] py-[16px] scrollbar-hide">
             {error ? (
               <div className="text-center py-[40px]">
                 <Warning size={32} weight="regular" style={{ color: '#ff6b6b', margin: '0 auto' }} />
