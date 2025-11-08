@@ -14,6 +14,7 @@ const Home: NextPage = () => {
   const [days, setDays] = useState("");
   const [stops, setStops] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -31,6 +32,7 @@ const Home: NextPage = () => {
       const result = await response.json();
       
       if (result.success) {
+        setShowModal(false);
         router.push({
           pathname: "/canvas",
           query: { flowData: JSON.stringify(result.data.flow) },
@@ -64,99 +66,162 @@ const Home: NextPage = () => {
             <p className={styles.description}>
               Welcome, {String(session.user.name || session.user.email || "User")}!
             </p>
-            <div style={{ marginTop: "20px", maxWidth: "500px", margin: "0 auto" }}>
-              <div style={{ marginBottom: "15px" }}>
-                <input
-                  type="text"
-                  placeholder="From (e.g., Delhi)"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    fontSize: "14px",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: "15px" }}>
-                <input
-                  type="text"
-                  placeholder="To (e.g., Goa)"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    fontSize: "14px",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: "15px" }}>
-                <input
-                  type="number"
-                  placeholder="Days (e.g., 7)"
-                  value={days}
-                  onChange={(e) => setDays(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    fontSize: "14px",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: "20px" }}>
-                <input
-                  type="text"
-                  placeholder="Stops (optional, e.g., Mumbai, Pune)"
-                  value={stops}
-                  onChange={(e) => setStops(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    fontSize: "14px",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                  }}
-                />
-              </div>
-              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                <button
-                  onClick={handleOpenCanvas}
-                  disabled={loading}
-                  style={{
-                    padding: "10px 20px",
-                    fontSize: "16px",
-                    backgroundColor: loading ? "#ccc" : "#0070f3",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: loading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {loading ? "Generating..." : "Open Canvas"}
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  style={{
-                    padding: "10px 20px",
-                    fontSize: "16px",
-                    backgroundColor: "#ff0000",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Sign Out
-                </button>
-              </div>
+            <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button
+                onClick={() => setShowModal(true)}
+                style={{
+                  padding: "12px 30px",
+                  fontSize: "16px",
+                  backgroundColor: "#0070f3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                }}
+              >
+                New Trip
+              </button>
+              <button
+                onClick={handleSignOut}
+                style={{
+                  padding: "10px 20px",
+                  fontSize: "16px",
+                  backgroundColor: "#ff0000",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                Sign Out
+              </button>
             </div>
+
+            {showModal && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 1000,
+                }}
+                onClick={() => setShowModal(false)}
+              >
+                <div
+                  style={{
+                    backgroundColor: "white",
+                    padding: "30px",
+                    borderRadius: "10px",
+                    maxWidth: "500px",
+                    width: "90%",
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h2 style={{ marginTop: 0, marginBottom: "20px", color: "#333" }}>
+                    Plan Your Trip
+                  </h2>
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      type="text"
+                      placeholder="From (e.g., Delhi)"
+                      value={from}
+                      onChange={(e) => setFrom(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      type="text"
+                      placeholder="To (e.g., Goa)"
+                      value={to}
+                      onChange={(e) => setTo(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: "15px" }}>
+                    <input
+                      type="number"
+                      placeholder="Days (e.g., 7)"
+                      value={days}
+                      onChange={(e) => setDays(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: "20px" }}>
+                    <input
+                      type="text"
+                      placeholder="Stops (optional, e.g., Mumbai, Pune)"
+                      value={stops}
+                      onChange={(e) => setStops(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "14px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                    <button
+                      onClick={() => setShowModal(false)}
+                      style={{
+                        padding: "10px 20px",
+                        fontSize: "16px",
+                        backgroundColor: "#ccc",
+                        color: "#333",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleOpenCanvas}
+                      disabled={loading}
+                      style={{
+                        padding: "10px 20px",
+                        fontSize: "16px",
+                        backgroundColor: loading ? "#ccc" : "#0070f3",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: loading ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {loading ? "Generating..." : "Generate Trip"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div>

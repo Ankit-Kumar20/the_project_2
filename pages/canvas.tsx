@@ -15,61 +15,146 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-// Custom node component
-const CustomNode = ({ data }: { data: { label: string } }) => {
+// Custom node component - Simple black and white wireframe style
+const CustomNode = ({ data }: { data: { 
+  label: string; 
+  googleMapsLink?: string;
+  info?: string;
+  day?: number;
+} }) => {
+  // Debug: Log node data to console
+  console.log('CustomNode rendered:', { label: data.label, hasGoogleMapsLink: !!data.googleMapsLink, googleMapsLink: data.googleMapsLink });
+  
   return (
     <div
       style={{
-        padding: "10px 20px",
-        borderRadius: "8px",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        color: "white",
-        border: "2px solid #764ba2",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-        minWidth: "150px",
+        padding: "14px 18px",
+        borderRadius: "4px",
+        background: "#ffffff",
+        color: "#000000",
+        border: "1.5px solid #000000",
+        boxShadow: "none",
+        minWidth: "180px",
         textAlign: "center",
-        fontWeight: "500",
+        fontWeight: "400",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
-      {data.label}
+      <div style={{ fontWeight: "600", marginBottom: "6px", fontSize: "14px", color: "#000" }}>
+        {data.label}
+      </div>
+      {data.day && (
+        <div style={{ 
+          fontSize: "11px", 
+          color: "#666", 
+          marginBottom: "8px",
+          fontWeight: "400"
+        }}>
+          Day {data.day}
+        </div>
+      )}
+      {data.googleMapsLink && (
+        <a
+          href={data.googleMapsLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            fontSize: "11px",
+            color: "#000",
+            textDecoration: "none",
+            background: "#fff",
+            border: "1px solid #000",
+            padding: "4px 10px",
+            borderRadius: "2px",
+            marginTop: "2px",
+            transition: "all 0.2s",
+            fontWeight: "500",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#000";
+            e.currentTarget.style.color = "#fff";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.color = "#000";
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('Google Maps link clicked:', data.googleMapsLink);
+          }}
+        >
+          📍 View on Maps
+        </a>
+      )}
     </div>
   );
 };
 
-// Define node types
+// Define node types - use CustomNode as default for all types
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
+  default: CustomNode,
+  input: CustomNode,
+  output: CustomNode,
 };
 
 const initialNodes: Node[] = [
   {
     id: "1",
-    type: "input",
-    data: { label: "Start Node" },
+    type: "custom",
+    data: { 
+      label: "Delhi",
+      day: 1,
+      googleMapsLink: "https://www.google.com/maps/search/?api=1&query=Delhi+India"
+    },
     position: { x: 250, y: 100 },
   },
   {
     id: "2",
-    data: { label: "Process Node" },
+    type: "custom",
+    data: { 
+      label: "Taj Mahal, Agra",
+      day: 2,
+      googleMapsLink: "https://www.google.com/maps/search/?api=1&query=Taj+Mahal+Agra"
+    },
     position: { x: 250, y: 250 },
   },
   {
     id: "3",
     type: "custom",
-    data: { label: "Custom Node" },
+    data: { 
+      label: "Jaipur City Palace",
+      day: 3,
+      googleMapsLink: "https://www.google.com/maps/search/?api=1&query=City+Palace+Jaipur"
+    },
     position: { x: 250, y: 400 },
-  },
-  {
-    id: "4",
-    type: "output",
-    data: { label: "End Node" },
-    position: { x: 250, y: 550 },
   },
 ];
 
 const initialEdges: Edge[] = [
-  { id: "e1-2", source: "1", target: "2", animated: true },
-  { id: "e2-3", source: "2", target: "3", animated: true },
+  { 
+    id: "e1-2", 
+    source: "1", 
+    target: "2", 
+    animated: false, 
+    label: "4h drive",
+    style: { stroke: '#000', strokeWidth: 1.5 },
+    labelStyle: { fill: '#000', fontWeight: 400, fontSize: 11 },
+    labelBgStyle: { fill: '#fff', fillOpacity: 0.9 }
+  },
+  { 
+    id: "e2-3", 
+    source: "2", 
+    target: "3", 
+    animated: false, 
+    label: "5h drive",
+    style: { stroke: '#000', strokeWidth: 1.5 },
+    labelStyle: { fill: '#000', fontWeight: 400, fontSize: 11 },
+    labelBgStyle: { fill: '#fff', fillOpacity: 0.9 }
+  },
 ];
 
 export default function Canvas() {
@@ -84,7 +169,12 @@ export default function Canvas() {
       try {
         const flowData = JSON.parse(router.query.flowData as string);
         if (flowData.nodes && flowData.edges) {
-          setNodes(flowData.nodes);
+          // Ensure all nodes use 'custom' type to display Google Maps links
+          const processedNodes = flowData.nodes.map((node: Node) => ({
+            ...node,
+            type: node.type || 'custom'
+          }));
+          setNodes(processedNodes);
           setEdges(flowData.edges);
         }
       } catch (error) {
@@ -130,7 +220,7 @@ export default function Canvas() {
   }
 
   return (
-    <div style={{ width: "100vw", height: "100vh" }}>
+    <div style={{ width: "100vw", height: "100vh", background: "#fafafa" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -140,10 +230,19 @@ export default function Canvas() {
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.2 }}
+        defaultEdgeOptions={{
+          style: { stroke: '#000', strokeWidth: 1.5 },
+          type: 'smoothstep',
+        }}
       >
-        <Background />
+        <Background color="#e0e0e0" gap={16} size={1} />
         <Controls />
-        <MiniMap />
+        <MiniMap 
+          nodeColor="#ffffff"
+          nodeStrokeColor="#000000"
+          nodeStrokeWidth={2}
+          maskColor="rgba(0, 0, 0, 0.1)"
+        />
       </ReactFlow>
     </div>
   );

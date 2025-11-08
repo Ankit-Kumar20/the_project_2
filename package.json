@@ -25,9 +25,10 @@
     "postgres": "^3.4.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "zod": "^4.1.12",
     "reactflow": "^11.11.4",
-    "tailwindcss": "^4.0.15"
+    "tailwindcss": "^4.0.15",
+    "tavily": "^1.0.2",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/node": "^22.13.11",
