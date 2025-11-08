@@ -93,7 +93,8 @@ GRAPH MANIPULATION GUIDELINES:
 **Adding Nodes:**
 - **CRITICAL: Node ID MUST MATCH the day number** (day 1 → id "1", day 2 → id "2", day 3 → id "3")
 - If adding a new day, assign next sequential day number and matching ID
-- Calculate position: { x: 250-400 (vary for visual appeal), y: day * 150 }
+- Calculate position for NEW nodes only: { x: 250-400 (vary for visual appeal), y: day * 150 }
+- **PRESERVE existing node positions - do NOT recalculate positions for existing nodes**
 - Always include: id, type: "custom", data: { label, day, googleMapsLink }, position
 - Generate Google Maps link: "https://www.google.com/maps/search/?api=1&query=PLACE_NAME"
 
@@ -102,6 +103,7 @@ GRAPH MANIPULATION GUIDELINES:
 - Remove ALL edges connected to that node (where source or target = node.id)
 - **CRITICAL: RENUMBER ALL REMAINING NODES so IDs MATCH their day numbers**
 - **Adjust day numbers to be sequential starting from 1**
+- **PRESERVE existing node positions - do NOT recalculate positions when updating day numbers**
 - Update ALL edge source/target references to use the NEW node IDs
 - Example: If nodes [day 1, day 2, day 3] and you remove day 2, remaining nodes should be [day 1, day 2 (was day 3)] with IDs ["1", "2"]
 
@@ -142,6 +144,8 @@ IMPORTANT RULES:
 8. For new nodes, calculate position based on day: { x: 250-400, y: day * 150 }
 9. Preserve all node data properties (activities, accommodation, etc.) when not modifying them
 10. Edge IDs should follow pattern "e{source}-{target}" using the final node IDs
+11. **PRESERVE existing node positions - NEVER recalculate positions for nodes that already exist in the graph**
+12. **Only calculate positions for NEW nodes being added - keep existing nodes at their current x,y coordinates**
 
 EXAMPLE OF NODE REMOVAL WITH DAY/ID RENUMBERING:
 
@@ -164,7 +168,7 @@ AFTER (New Graph - DAYS AND IDs RENUMBERED):
 {
   "nodes": [
     {"id": "1", "data": {"label": "Paris", "day": 1}, "position": {"x": 250, "y": 150}},
-    {"id": "2", "data": {"label": "Milan", "day": 2}, "position": {"x": 250, "y": 300}}
+    {"id": "2", "data": {"label": "Milan", "day": 2}, "position": {"x": 250, "y": 450}}
   ],
   "edges": [
     {"id": "e1-2", "source": "1", "target": "2"}
@@ -173,10 +177,11 @@ AFTER (New Graph - DAYS AND IDs RENUMBERED):
 
 What changed:
 - Rome removed
-- Milan: day changed from 3 → 2, id changed from "3" → "2", position.y changed from 450 → 300
+- Milan: day changed from 3 → 2, id changed from "3" → "2", **position PRESERVED at {x: 250, y: 450}**
 - Edge updated to connect "1" to new "2"
 - Days are now sequential: 1, 2 (no gap)
 - IDs match days: day 1 = id "1", day 2 = id "2"
+- **Node positions NOT recalculated - they stay where the user placed them**
 
 Now analyze the user's query and return the appropriate response.`;
 

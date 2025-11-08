@@ -116,6 +116,7 @@ function executeAddEdge(edges: Edge[], payload: any): Edge[] {
         label: payload.label,
         type: payload.type || 'smoothstep',
         animated: false,
+        data: payload.data || payload.distance ? { distance: payload.distance || payload.data?.distance } : undefined,
     };
 
     return [...edges, newEdge];
