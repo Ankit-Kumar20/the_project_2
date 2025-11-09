@@ -35,7 +35,12 @@ const NodeSchema = z.object({
       description: z.string().optional(),
       cuisine: z.string().optional(),
       priceRange: z.string().optional()
-    })).optional()
+    })).optional(),
+    todos: z.array(z.object({
+      id: z.string(),
+      text: z.string(),
+      completed: z.boolean()
+    })).optional().default([])
   }),
   position: z.object({
     x: z.number(),
