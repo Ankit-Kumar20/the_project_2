@@ -38,7 +38,7 @@ const HomePage: NextPage = () => {
       }}
     >
       <Head>
-        <title>TravelFlow - Stop planning trips the hard way</title>
+        <title>TripFlow - Stop planning trips the hard way</title>
       </Head>
 
       {/* Vibeathon Banner */}
@@ -134,7 +134,7 @@ const HomePage: NextPage = () => {
           }}
         >
           <ContrastIcon size={32} />
-          TravelFlow
+          TripFlow
         </div>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <button

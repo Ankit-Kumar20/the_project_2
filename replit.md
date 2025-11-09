@@ -1,8 +1,8 @@
-# TravelFlow - AI-Powered Travel Itinerary Planner
+# TripFlow - AI-Powered Travel Itinerary Planner
 
 ## Overview
 
-TravelFlow is a Next.js application that generates visual travel itineraries using AI. The app creates interactive flow diagrams showing day-by-day travel plans with locations, activities, and connections. Users can manipulate their itineraries through a natural language chatbot that restructures the entire trip graph based on their requests.
+TripFlow is a Next.js application that generates visual travel itineraries using AI. The app creates interactive flow diagrams showing day-by-day travel plans with locations, activities, and connections. Users can manipulate their itineraries through a natural language chatbot that restructures the entire trip graph based on their requests.
 
 **Core Features:**
 - AI-generated travel itineraries with real-time web data (via Exa AI)
