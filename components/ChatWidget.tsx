@@ -105,7 +105,7 @@ export default function ChatWidget({ nodes, edges, onGraphUpdate, onUndo, onRedo
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="fixed bottom-5 right-5 z-[102] w-[44px] h-[44px] border-none rounded-full cursor-pointer font-light text-[18px] flex items-center justify-center transition-all duration-200"
+                    className="fixed bottom-5 right-5 z-[102] px-4 py-2 border-none rounded-full cursor-pointer font-medium text-[14px] flex items-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl"
                     style={{
                         background: isDark ? "#1a1a1a" : "#f3f4f6",
                         color: isDark ? "#fff" : "#000",
@@ -131,6 +131,7 @@ export default function ChatWidget({ nodes, edges, onGraphUpdate, onUndo, onRedo
                     title="Open chat"
                 >
                     <Sparkle size={20} weight="regular" />
+                    <span>AI Assistant</span>
                 </button>
             )}
 
