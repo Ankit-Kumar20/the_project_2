@@ -26,7 +26,7 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
   },
-  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",") || [],
+  trustedOrigins: process.env.BETTER_AUTH_URL?.split(",") || [],
 });
 
 export type Session = typeof auth.$Infer.Session;
